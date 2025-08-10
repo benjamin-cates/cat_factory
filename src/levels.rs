@@ -18,9 +18,9 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
     },
 ];
 pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
-    &["Movement tutorial", "Traps", "Buttons", "Acid River"],
-    &["Easy Box", "Two box bridge", "Triple box maze"],
-    &["Cat Coordination", "Pushing my boxes"],
+    &["Movement", "Traps", "Buttons", "Box Bridge"],
+    &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze"],
+    &["Cat Coordination", "Pushing My Boxes"],
     &["one", "two", "three"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
@@ -180,7 +180,7 @@ impl World {
                 ((4, 3).into(), ObjectInfo::Door(Direction::East, false)),
                 ((4, 4).into(), ObjectInfo::Goal),
             ]),
-            "Movement tutorial" => Self::make_world(
+            "Movement" => Self::make_world(
                 6,
                 3,
                 &[
@@ -265,17 +265,15 @@ impl World {
                 ((4,2).into(), ObjectInfo::Cat),
                 ((3,1).into(), ObjectInfo::Box),
                 ((3,3).into(), ObjectInfo::Box),
-            ])
-            .add_caption("Boxes can be pushed over acid. Try to get back to your box!!"),
-
-            "Two box bridge" => Self::make_world(
+            ]),
+            "Box Bridge" => Self::make_world(
                 5,
                 4,
                 &[
-                    &[true, false, false, true, false],
-                    &[true, false, false, true, false],
-                    &[true, true, true, true, true],
-                    &[true, true, true, true, true],
+                    &[T, F, F, T, F],
+                    &[T, F, F, T, F],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
                 ],
                 1,
             )
@@ -283,12 +281,35 @@ impl World {
                 ((0, 0).into(), ObjectInfo::Goal),
                 ((0, 1).into(), ObjectInfo::Door(Direction::East, false)),
                 ((3, 0).into(), ObjectInfo::PushButton((0, 1).into(), 0)),
-                ((3, 1).into(), ObjectInfo::Trap),
+                ((3, 1).into(), ObjectInfo::Death),
                 ((3, 2).into(), ObjectInfo::Box),
                 ((1, 2).into(), ObjectInfo::Box),
                 ((4, 2).into(), ObjectInfo::Cat),
+            ])
+            .add_caption("Boxes can be pushed over acid. Try to get back to your box!!"),
+            "Pushing My Buttons" => Self::make_world(
+                6,5,
+                &[
+                    &[T,T,T,T,T,T],
+                    &[T,T,T,F,F,F],
+                    &[T,T,T,T,T,T],
+                    &[T,T,T,T,F,F],
+                    &[T,T,T,T,T,T],
+                ],
+                1,
+            )
+            .add_objects(vec![
+                ((1,0).into(), ObjectInfo::Cat),
+                ((3,0).into(), ObjectInfo::Door(Direction::North, false)),
+                ((4,0).into(), ObjectInfo::Door(Direction::North, false)),
+                ((4,2).into(), ObjectInfo::Door(Direction::North, false)),
+                ((5,0).into(), ObjectInfo::Goal),
+                ((5,4).into(), ObjectInfo::PushButton((3,0).into(),0)),
+                ((5,2).into(), ObjectInfo::ToggleButton((4,0).into(),0)),
+                ((1,4).into(), ObjectInfo::PushButton((4,2).into(),0)),
+                ((2,1).into(), ObjectInfo::Box),
             ]),
-            "Triple box maze" => Self::make_world(
+            "Box Maze" => Self::make_world(
                 8,
                 7,
                 &[
@@ -338,7 +359,7 @@ impl World {
                 ((2, 3).into(), ObjectInfo::PushButton((4, 2).into(), 0)),
             ])
             .add_caption("Uh oh! It looks like two cats escaped their boxes. They both move in the same direction at your command. Both cats have to be in their boxes to ship them away."),
-            "Pushing my boxes" => Self::make_world(
+            "Pushing My Boxes" => Self::make_world(
                 8,
                 6,
                 &[

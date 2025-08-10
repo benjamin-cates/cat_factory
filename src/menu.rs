@@ -1,10 +1,12 @@
+use std::ops::Mul;
+
 use crate::levels::{PAGE_NAMES, PUZZLE_PAGES};
 use turbo::*;
 
 #[derive(Copy, PartialEq)]
 #[turbo::serialize]
 pub enum Menu {
-    PuzzlePage(usize),
+    PuzzlePage(usize, usize),
     World(usize, usize),
 }
 
@@ -34,7 +36,7 @@ pub fn button(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) ->
 impl Menu {
     pub fn run(&self, completed: &Vec<Vec<bool>>) -> (Menu, &'static str) {
         match self {
-            Menu::PuzzlePage(page_id) => {
+            Menu::PuzzlePage(page_id, selected) => {
                 let display_bounds = Bounds::with_size(100, 20)
                     .anchor_center(&turbo::screen())
                     .translate_x(-150)
@@ -58,10 +60,29 @@ impl Menu {
                 );
                 for i in 0..puzzle_names.len() {
                     let bounds = top_bounds.translate_y(i * 30);
+                    if *selected == i {
+                        let color = 0x282828FF
+                            + 0x01010100
+                                * (turbo::time::tick() as f64 / 5.0).sin().mul(25.0).floor() as u32;
+                        rect!(
+                            bounds = bounds.expand(2),
+                            color = color,
+                            fixed = true,
+                            border_radius = 2
+                        );
+                    }
                     let (color_a, color_b) = if completed[*page_id][i] {
-                        (0x29D227FF, 0x23B221FF)
+                        if *selected == i {
+                            (0x23B221FF, 0x23B221FF)
+                        } else {
+                            (0x23B221FF, 0x29D227FF)
+                        }
                     } else {
-                        (0x777777FF, 0x888888FF)
+                        if *selected == i {
+                            (0x777777FF, 0x777777FF)
+                        } else {
+                            (0x777777FF, 0x888888FF)
+                        }
                     };
                     if button(puzzle_names[i], bounds, color_a, color_b) {
                         return (Menu::World(*page_id, i), PUZZLE_PAGES[*page_id][i]);
@@ -73,23 +94,55 @@ impl Menu {
                     .translate_y(4 * 30);
                 let left_bounds = right_bounds.translate_x(-60);
                 if *page_id == PUZZLE_PAGES.len() - 1 {
-                    button("Next", right_bounds, 0x666666FF, 0x666666FF);
+                    button("Next", right_bounds, 0x444444FF, 0x444444FF);
                 } else {
                     if button("Next", right_bounds, 0x777777FF, 0x888888FF) {
-                        return (Menu::PuzzlePage(*page_id + 1), "");
+                        return (Menu::PuzzlePage(*page_id + 1, 0), "");
                     }
                 }
                 if *page_id == 0 {
-                    button("Prev", left_bounds, 0x666666FF, 0x666666FF);
+                    button("Prev", left_bounds, 0x444444FF, 0x444444FF);
                 } else {
                     if button("Prev", left_bounds, 0x777777FF, 0x888888FF) {
-                        return (Menu::PuzzlePage(*page_id - 1), "");
+                        return (Menu::PuzzlePage(*page_id - 1, 0), "");
                     }
                 }
+                if turbo::gamepad::get(0).up.just_pressed() {
+                    if *selected != 0 {
+                        return (Menu::PuzzlePage(*page_id, (*selected).max(1) - 1), "");
+                    }
+                }
+                if turbo::gamepad::get(0).down.just_pressed() {
+                    return (
+                        Menu::PuzzlePage(*page_id, (*selected + 1).min(puzzle_names.len() - 1)),
+                        "",
+                    );
+                }
+                if turbo::gamepad::get(0).right.just_pressed() {
+                    return (
+                        Menu::PuzzlePage((*page_id + 1).min(PUZZLE_PAGES.len() - 1), 0),
+                        "",
+                    );
+                }
+                if turbo::gamepad::get(0).left.just_pressed() {
+                    return (Menu::PuzzlePage((*page_id).max(1) - 1, 0), "");
+                }
+                if turbo::gamepad::get(0).a.just_pressed()
+                    || turbo::keyboard::get().enter().just_pressed()
+                    || turbo::keyboard::get().key_e().just_pressed()
+                {
+                    return (
+                        Menu::World(*page_id, *selected as usize),
+                        PUZZLE_PAGES[*page_id][*selected],
+                    );
+                }
             }
-            Menu::World(page_id, _) => {
-                if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF) {
-                    return (Menu::PuzzlePage(*page_id), "");
+            Menu::World(page_id, world_id) => {
+                if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF)
+                    || turbo::keyboard::get().escape().just_pressed()
+                    || gamepad::get(0).start.just_pressed()
+                {
+                    return (Menu::PuzzlePage(*page_id, *world_id), "");
                 }
             }
         }
