@@ -1,0 +1,272 @@
+@font-face {
+  font-family: "04b03";
+  src: url("./04b03.ttf");
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --doc-height: 100vh;
+  --button-size: 40px;
+  --button-font-size: 12px;
+  --start-select-width: 50px;
+  --start-select-height: 20px;
+  --start-select-font-size: 8px;
+  --gamepad-opacity: 0.25;
+}
+
+html,
+body {
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* align-items: center; */
+  font-family: "04b03", monospace;
+  align-items: flex-start;
+  height: var(--doc-height);
+  max-height: -webkit-fill-available;
+  width: 100vw;
+  margin: 0;
+  background: #202124;
+}
+@media (orientation: portrait) and (hover: none) {
+  html,
+  body {
+    justify-content: flex-start;
+  }
+}
+
+@media (orientation: portrait) and (hover: none) {
+  iframe {
+    width: calc(100% - 32px) !important;
+  }
+}
+
+button {
+  font-family: "04b03", monospace;
+}
+
+#player {
+  position: relative;
+  display: flex;
+  flex: 1;
+  width: 100vw;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background: #202124;
+  user-select: none;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  margin: auto;
+  background-color: #202124;
+  image-rendering: pixelated;
+  outline: none;
+}
+
+p {
+  color: #fff;
+  font-size: 100px;
+}
+
+/* Touch Gamepad Overlay Styles */
+#touch-gamepad-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.gamepad-button {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  pointer-events: all;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  transition: all 0.1s ease;
+}
+
+.gamepad-button:active,
+.gamepad-button.pressed {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(0.95);
+}
+
+.dpad-container {
+  position: absolute;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.dpad-button {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  pointer-events: all;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  transition: all 0.1s ease;
+}
+
+.dpad-button:active,
+.dpad-button.pressed {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(0.95);
+}
+
+.system-button {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  pointer-events: all;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  font-size: 10px;
+  backdrop-filter: blur(10px);
+  transition: all 0.1s ease;
+}
+
+.system-button:active,
+.system-button.pressed {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(0.95);
+}
+
+.dpad-container {
+  left: 20px;
+  bottom: 120px;
+  width: 120px;
+  height: 120px;
+}
+
+.dpad-up {
+  top: 0;
+  left: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px 8px 4px 4px;
+}
+
+.dpad-down {
+  bottom: 0;
+  left: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px 4px 8px 8px;
+}
+
+.dpad-left {
+  left: 0;
+  top: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px 4px 4px 8px;
+}
+
+.dpad-right {
+  right: 0;
+  top: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px 8px 8px 4px;
+}
+
+.action-a {
+  right: 20px;
+  bottom: 160px;
+  width: 50px;
+  height: 50px;
+}
+
+.action-x {
+  right: 80px;
+  bottom: 200px;
+  width: 50px;
+  height: 50px;
+}
+
+.action-b {
+  right: 80px;
+  bottom: 120px;
+  width: 50px;
+  height: 50px;
+}
+
+.action-y {
+  right: 140px;
+  bottom: 160px;
+  width: 50px;
+  height: 50px;
+}
+
+.system-select {
+  left: 50%;
+  bottom: 100px;
+  width: 50px;
+  height: 25px;
+  margin-left: -60px;
+}
+
+.system-start {
+  left: 50%;
+  bottom: 100px;
+  width: 50px;
+  height: 25px;
+  margin-left: 10px;
+}
+
+/* Hide overlay toggle */
+#gamepad-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}

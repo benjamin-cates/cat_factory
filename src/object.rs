@@ -1,0 +1,137 @@
+use turbo::*;
+
+use crate::{
+    util::{Direction, Point},
+    world::World,
+};
+
+#[turbo::serialize]
+#[derive(PartialEq)]
+pub enum ObjectInfo {
+    Cat,
+    Goal,
+    Box,
+    Barrier,
+    WallLeft(bool),
+    WallRight(bool),
+    WallBack(bool),
+    WallFront,
+    PushButton(Point, usize),
+    ToggleButton(Point, usize),
+    Door(Direction, bool),
+    Trap,
+    Death,
+}
+
+#[turbo::serialize]
+#[derive(PartialEq)]
+pub struct Object {
+    pub obj_type: ObjectInfo,
+    pub draw_pos: (Tween<i32>, Tween<i32>),
+    pub facing: Direction,
+    pub position: Point,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MoveType {
+    NotAllowed,
+    Push,
+    MoveOver,
+}
+
+impl Object {
+    pub fn draw_height(&self) -> i32 {
+        match self.obj_type {
+            ObjectInfo::Trap => -500,
+            ObjectInfo::Cat => 500,
+            ObjectInfo::Goal => 499,
+            ObjectInfo::Box => 500,
+            ObjectInfo::Barrier => 0,
+            ObjectInfo::WallLeft(_) => 1500,
+            ObjectInfo::WallRight(_) => -2000,
+            ObjectInfo::WallBack(_) => -500,
+            ObjectInfo::WallFront => 2000,
+            ObjectInfo::PushButton(..) => -2000,
+            ObjectInfo::ToggleButton(..) => -2000,
+            ObjectInfo::Door(..) => 510,
+            ObjectInfo::Death => -500,
+        }
+    }
+    pub fn draw(&mut self) {
+        let x = self.draw_pos.0.get() as i32;
+        let y = self.draw_pos.1.get() as i32;
+        match self.obj_type {
+            ObjectInfo::Trap => sprite!("trap", x = x, y = y,),
+            ObjectInfo::Box => sprite!("box", x = x - 1, y = y - 11),
+            ObjectInfo::Cat => sprite!("house/cat", x = x + 5, y = y - 10),
+            ObjectInfo::Barrier => {}
+            ObjectInfo::Goal => sprite!("goal", x = x, y = y - 16),
+            ObjectInfo::WallBack(true) => sprite!("factory/front_wall", x = x, y = y - 3),
+            ObjectInfo::WallBack(false) => sprite!("factory/back_wall2", x = x, y = (y - 32)),
+            ObjectInfo::WallFront => sprite!("factory/front_wall", x = x + 14, y = y + 25),
+            ObjectInfo::WallLeft(true) => sprite!("factory/left_wall", x = x, y = y - 32),
+            ObjectInfo::WallLeft(false) => sprite!("factory/right_wall", x = x, y = y - 27),
+            ObjectInfo::WallRight(true) => {
+                sprite!("factory/right_wall_short", x = x + 37, y = y - 34)
+            }
+            ObjectInfo::WallRight(false) => sprite!("factory/right_wall", x = x + 38, y = y - 27),
+            ObjectInfo::PushButton(..) => sprite!("house/push_button", x = x, y = y),
+            ObjectInfo::ToggleButton(..) => sprite!("house/toggle_button", x = x, y = y),
+            ObjectInfo::Door(Direction::South | Direction::North, true) => {
+                sprite!("factory/door_vertical_open", x = x + 19, y = y - 17)
+            }
+            ObjectInfo::Door(Direction::East | Direction::West, true) => {
+                sprite!("factory/door_horizontal_open", x = x + 6, y = y - 7)
+            }
+            ObjectInfo::Door(Direction::South | Direction::North, false) => {
+                sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
+            }
+            ObjectInfo::Door(Direction::East | Direction::West, false) => {
+                sprite!("factory/door_horizontal_closed", x = x + 6, y = y - 7)
+            }
+            ObjectInfo::Death => {
+                sprite!("factory/acid", x = x, y = y)
+            }
+        }
+    }
+    pub fn test_push_by(&self, pusher: &ObjectInfo) -> MoveType {
+        match self.obj_type {
+            ObjectInfo::Trap => MoveType::MoveOver,
+            ObjectInfo::Box => {
+                if *pusher == ObjectInfo::Goal {
+                    MoveType::NotAllowed
+                } else {
+                    MoveType::Push
+                }
+            }
+            ObjectInfo::Goal => {
+                if *pusher == ObjectInfo::Cat {
+                    MoveType::MoveOver
+                } else {
+                    MoveType::Push
+                }
+            }
+            ObjectInfo::Barrier => MoveType::NotAllowed,
+            ObjectInfo::WallBack(_) | ObjectInfo::WallFront => MoveType::MoveOver,
+            ObjectInfo::WallLeft(_) | ObjectInfo::WallRight(_) => MoveType::MoveOver,
+            ObjectInfo::Cat => MoveType::Push,
+            ObjectInfo::PushButton(..) => MoveType::MoveOver,
+            ObjectInfo::ToggleButton(..) => MoveType::MoveOver,
+            ObjectInfo::Death => MoveType::MoveOver,
+            ObjectInfo::Door(_, true) => MoveType::MoveOver,
+            ObjectInfo::Door(_, false) => MoveType::NotAllowed,
+        }
+    }
+    pub fn does_move(&self, world: &World) -> bool {
+        if self.obj_type == ObjectInfo::Cat {
+            if world[self.position]
+                .iter()
+                .any(|v| v.obj_type == ObjectInfo::Trap)
+            {
+                return false;
+            }
+            return true;
+        }
+        false
+    }
+}

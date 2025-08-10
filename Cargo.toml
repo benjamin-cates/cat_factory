@@ -1,0 +1,17 @@
+[package]
+name = "catgame"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.turbo]
+user = "1f4b2d04-4374-4713-a959-a8c766798de9"
+
+[dependencies]
+borsh = "1.5.7"
+turbo = { version = "4.0.0", package = "turbo-genesis-sdk" }
+
+[lib]
+crate-type = ["cdylib"]
+
+[lints.rust]
+unexpected_cfgs = { level = "allow" }

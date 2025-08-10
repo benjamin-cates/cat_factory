@@ -1,0 +1,11 @@
+name = "Cat Factory"
+version = "0.1.0"
+description = "Solve the puzzle by packaging cats into the right boxes."
+authors = ["Benjamin Cates"]
+
+[canvas]
+width = 512
+height = 288
+
+[turbo-os]
+api-url = "https://os.turbo.computer"

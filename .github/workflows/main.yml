@@ -1,0 +1,22 @@
+on:
+  push:
+    branches: main
+jobs:
+  publish:
+    permissions:
+       pages: write
+       id-token: write
+    strategy:
+      matrix:
+        node-version: ['18.x']
+    runs-on: ubuntu-latest
+    name: Publish to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - run: cp www/index.html www/404.html
+      - uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: www
+      - uses: actions/deploy-pages@v4
