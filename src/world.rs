@@ -66,6 +66,9 @@ impl World {
         while let Some((_, edit)) = self.edit_history.pop_if(|v| v.0 == self.move_id) {
             match edit {
                 Edit::ChangeObjInfo(point, idx, info) => {
+                    if matches!(info, ObjectInfo::Door(..)) {
+                        audio::play("door");
+                    }
                     self[point][idx].obj_type = info;
                 }
                 Edit::MoveObject(old_point, idx, new_point) => {
@@ -199,6 +202,7 @@ impl World {
         // Set winning animation
         if self.is_win() {
             if !self.won {
+                audio::play("win");
                 for point in self.cells_iterator() {
                     for i in 0..self[point].len() {
                         if self[point][i].obj_type == ObjectInfo::Cat {
@@ -325,6 +329,7 @@ impl World {
         if self[point].iter().any(|v| v.obj_type == ObjectInfo::Death)
             && self[point].iter().any(|v| v.obj_type == ObjectInfo::Cat)
         {
+            audio::play("acid_bubbles");
             self.dead = true;
         }
         // Push buttons
@@ -373,6 +378,7 @@ impl World {
                             move_id,
                             Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
                         ));
+                        audio::play("door");
                         let cur_anim = self[point][i].animation.get();
                         self.edit_history
                             .push((move_id, Edit::SetAnimation(point, i, cur_anim)));
