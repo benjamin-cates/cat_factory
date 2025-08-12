@@ -7,9 +7,9 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
     |_world: &World| false,
     // 1: Every cat is in a goal
     |world: &World| {
-        for (_p, objs) in world.cells_iterator() {
-            if objs.iter().any(|v| v.obj_type == ObjectInfo::Cat)
-                && !objs.iter().any(|v| v.obj_type == ObjectInfo::Goal)
+        for p in world.cells_iterator() {
+            if world[p].iter().any(|v| v.obj_type == ObjectInfo::Cat)
+                && !world[p].iter().any(|v| v.obj_type == ObjectInfo::Goal)
             {
                 return false;
             }
@@ -53,6 +53,7 @@ impl World {
             move_id: 0,
             edit_history: vec![],
             dead: false,
+            won: false,
             caption: "".to_string(),
             hint: "".to_string(),
         };

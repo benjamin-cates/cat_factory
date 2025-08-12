@@ -30,6 +30,7 @@ pub struct Object {
     pub draw_pos: (Tween<i32>, Tween<i32>),
     pub facing: Direction,
     pub position: Point,
+    pub animation: Tween<i32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -60,12 +61,34 @@ impl Object {
     pub fn draw(&mut self) {
         let x = self.draw_pos.0.get() as i32;
         let y = self.draw_pos.1.get() as i32;
+        let anim = self.animation.get();
         match self.obj_type {
             ObjectInfo::Trap => sprite!("trap", x = x, y = y,),
             ObjectInfo::Box => sprite!("box", x = x - 1, y = y - 11),
-            ObjectInfo::Cat => sprite!("house/cat", x = x + 5, y = y - 10),
+            ObjectInfo::Cat => {
+                sprite!(
+                    "house/cat",
+                    x = x + 5,
+                    y = y - 10,
+                    opacity = (1.0 - anim as f32 / 8.0).max(0.0)
+                );
+            }
             ObjectInfo::Barrier => {}
-            ObjectInfo::Goal => sprite!("goal", x = x, y = y - 16),
+            ObjectInfo::Goal => {
+                if anim == 0 {
+                    sprite!("goal", x = x, y = y - 16)
+                } else if anim == 1 || anim == 2 {
+                    sprite!("goal2", x = x, y = y - 16)
+                } else if anim == 3 || anim == 4 {
+                    sprite!("goal3", x = x, y = y - 16)
+                } else if anim == 5 || anim == 6 {
+                    sprite!("goal4", x = x, y = y - 16)
+                } else if anim == 7 || anim == 8 {
+                    sprite!("goal5", x = x, y = y - 16)
+                } else {
+                    sprite!("goal6", x = x, y = y - 16 - (anim - 8) * 10)
+                }
+            }
             ObjectInfo::WallBack(true) => sprite!("factory/front_wall", x = x, y = y - 3),
             ObjectInfo::WallBack(false) => sprite!("factory/back_wall2", x = x, y = (y - 32)),
             ObjectInfo::WallFront => sprite!("factory/front_wall", x = x + 14, y = y + 25),
@@ -77,17 +100,23 @@ impl Object {
             ObjectInfo::WallRight(false) => sprite!("factory/right_wall", x = x + 38, y = y - 27),
             ObjectInfo::PushButton(..) => sprite!("house/push_button", x = x, y = y),
             ObjectInfo::ToggleButton(..) => sprite!("house/toggle_button", x = x, y = y),
-            ObjectInfo::Door(Direction::South | Direction::North, true) => {
-                sprite!("factory/door_vertical_open", x = x + 19, y = y - 17)
+            ObjectInfo::Door(Direction::South | Direction::North, _) => {
+                if anim == 0 {
+                    sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
+                } else if anim == 1 {
+                    sprite!("factory/door_vertical_middle", x = x + 19, y = y - 17)
+                } else if anim == 2 {
+                    sprite!("factory/door_vertical_open", x = x + 19, y = y - 17)
+                }
             }
-            ObjectInfo::Door(Direction::East | Direction::West, true) => {
-                sprite!("factory/door_horizontal_open", x = x + 6, y = y - 7)
-            }
-            ObjectInfo::Door(Direction::South | Direction::North, false) => {
-                sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
-            }
-            ObjectInfo::Door(Direction::East | Direction::West, false) => {
-                sprite!("factory/door_horizontal_closed", x = x + 6, y = y - 7)
+            ObjectInfo::Door(Direction::East | Direction::West, _) => {
+                if anim == 0 {
+                    sprite!("factory/door_horizontal_closed", x = x + 6, y = y - 7)
+                } else if anim == 1 {
+                    sprite!("factory/door_horizontal_middle", x = x + 6, y = y - 7)
+                } else if anim == 2 {
+                    sprite!("factory/door_horizontal_open", x = x + 6, y = y - 7)
+                }
             }
             ObjectInfo::Death => {
                 sprite!("factory/acid", x = x, y = y)

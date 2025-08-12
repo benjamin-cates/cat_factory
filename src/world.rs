@@ -18,6 +18,8 @@ pub enum Edit {
     MoveObject(Point, usize, Point),
     /// Contains (point, index, old_info)
     ChangeObjInfo(Point, usize, ObjectInfo),
+    /// Contains (point, index, old_animation_tween)
+    SetAnimation(Point, usize, i32),
 }
 
 #[turbo::serialize]
@@ -40,6 +42,8 @@ pub struct World {
     pub edit_history: Vec<(usize, Edit)>,
     /// Whether the player has died or not
     pub dead: bool,
+    /// Whether the game has been won
+    pub won: bool,
     /// Caption to always display
     pub caption: String,
     /// Hint to only show when the user clicks the button
@@ -54,6 +58,7 @@ impl World {
     /// Undo the previous move
     pub fn undo(&mut self) {
         self.dead = false;
+        self.won = false;
         if self.move_id == 0 {
             return;
         }
@@ -76,6 +81,9 @@ impl World {
                 Edit::Wiring(point, idx, active) => {
                     self.wiring[point.x() as usize + point.y() as usize * self.width][idx] = active;
                 }
+                Edit::SetAnimation(point, idx, anim) => {
+                    self[point][idx].animation.set(anim);
+                }
             }
         }
     }
@@ -96,6 +104,7 @@ impl World {
             draw_pos: (Tween::new(draw_pos.0), Tween::new(draw_pos.1)),
             facing: Direction::East,
             position: point,
+            animation: Tween::new(0),
         });
     }
     /// Draw the whole world
@@ -145,10 +154,10 @@ impl World {
             fixed = true,
         );
     }
-    pub fn cells_iterator<'a>(&'a self) -> impl Iterator<Item = (Point, &'a Vec<Object>)> {
+    pub fn cells_iterator<'a>(&'a self) -> impl Iterator<Item = Point> + use<> {
+        let width = self.width;
         (0..(self.width * self.height))
-            .map(|v| Point::from(((v % self.width) as i32, (v / self.width) as i32)))
-            .zip(self.inner.iter())
+            .map(move |v| Point::from(((v % width) as i32, (v / width) as i32)))
     }
     /// Iterate over which order the points should be pushed in if going in a certain direction.
     /// For example, if we are pushing West, we would want to start from the left and end with the right.
@@ -186,6 +195,28 @@ impl World {
                 }
             }
             self.try_movement(dir, position, push_proposal);
+        }
+        // Set winning animation
+        if self.is_win() {
+            if !self.won {
+                for point in self.cells_iterator() {
+                    for i in 0..self[point].len() {
+                        if self[point][i].obj_type == ObjectInfo::Cat {
+                            self[point][i].animation.duration(30);
+                            self[point][i].animation.set(30);
+                            self.edit_history
+                                .push((self.move_id, Edit::SetAnimation(point, i, 0)));
+                        }
+                        if self[point][i].obj_type == ObjectInfo::Goal {
+                            self[point][i].animation.duration(30);
+                            self[point][i].animation.set(30);
+                            self.edit_history
+                                .push((self.move_id, Edit::SetAnimation(point, i, 0)));
+                        }
+                    }
+                }
+            }
+            self.won = true;
         }
         if num_edits_before != self.edit_history.len() {
             self.move_id += 1;
@@ -283,6 +314,9 @@ impl World {
     /// Set new items in a cell
     /// This function checks for button presses
     pub fn update_cell(&mut self, point: Point, old: &Vec<Object>) {
+        if self[point] == *old {
+            return;
+        }
         let covered = self[point].iter().any(|v| {
             v.obj_type == ObjectInfo::Box
                 || v.obj_type == ObjectInfo::Cat
@@ -334,10 +368,17 @@ impl World {
                 ObjectInfo::Door(dir, ref mut open) => {
                     let old_open = *open;
                     *open = new_wiring.iter().fold(false, |a, b| a ^ b);
-                    self.edit_history.push((
-                        move_id,
-                        Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
-                    ))
+                    if *open != old_open {
+                        self.edit_history.push((
+                            move_id,
+                            Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
+                        ));
+                        let cur_anim = self[point][i].animation.get();
+                        self.edit_history
+                            .push((move_id, Edit::SetAnimation(point, i, cur_anim)));
+                        self[point][i].animation.duration(5);
+                        self[point][i].animation.set(if old_open { 0 } else { 2 });
+                    }
                 }
                 _ => {}
             }

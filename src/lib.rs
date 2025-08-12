@@ -51,7 +51,7 @@ impl GameState {
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
-            if self.world.is_win() {
+            if self.world.won {
                 rect!(
                     bounds = action_background_bounds.expand(3),
                     color = 0x222222FF,
@@ -73,7 +73,7 @@ impl GameState {
                 self.solved_maps[page_id][puzzle_id] = true;
             }
             // If user died
-            if self.world.dead {
+            else if self.world.dead {
                 rect!(
                     bounds = action_background_bounds.expand(3),
                     color = 0x222222FF,
@@ -93,18 +93,19 @@ impl GameState {
                     self.world = World::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
                 }
                 return;
-            }
-            if turbo::gamepad::get(0).left.just_pressed() {
-                self.world.movement(Direction::West)
-            }
-            if turbo::gamepad::get(0).right.just_pressed() {
-                self.world.movement(Direction::East)
-            }
-            if turbo::gamepad::get(0).up.just_pressed() {
-                self.world.movement(Direction::North)
-            }
-            if turbo::gamepad::get(0).down.just_pressed() {
-                self.world.movement(Direction::South)
+            } else {
+                if turbo::gamepad::get(0).left.just_pressed() {
+                    self.world.movement(Direction::West)
+                }
+                if turbo::gamepad::get(0).right.just_pressed() {
+                    self.world.movement(Direction::East)
+                }
+                if turbo::gamepad::get(0).up.just_pressed() {
+                    self.world.movement(Direction::North)
+                }
+                if turbo::gamepad::get(0).down.just_pressed() {
+                    self.world.movement(Direction::South)
+                }
             }
         } else {
             let center = World::to_screen_space(
