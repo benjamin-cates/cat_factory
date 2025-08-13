@@ -20,7 +20,12 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
 pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
     &["Movement", "Traps", "Buttons", "Box Bridge"],
     &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze"],
-    &["Cat Coordination", "Pushing My Boxes"],
+    &[
+        "Cat Coordination",
+        "Help Me Out!",
+        "Parking Lot",
+        "Pushing My Boxes",
+    ],
     &["one", "two", "three"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
@@ -360,6 +365,68 @@ impl World {
                 ((2, 3).into(), ObjectInfo::PushButton((4, 2).into(), 0)),
             ])
             .add_caption("Uh oh! It looks like two cats escaped their boxes. They both move in the same direction at your command. Both cats have to be in their boxes to ship them away."),
+            "Parking Lot" => Self::make_world(
+                7,
+                6,
+                &[
+                    &[T,T,T,F,T,T,T],
+                    &[T,F,T,F,T,T,T],
+                    &[T,T,T,T,T,T,T],
+                    &[T,T,T,F,T,T,T],
+                    &[T,T,T,F,T,F,T],
+                    &[T,T,T,F,T,T,F],
+                ],
+                1
+            )
+            .add_objects(vec![
+                ((1,3).into(),ObjectInfo::Cat),
+                ((5,3).into(), ObjectInfo::Cat),
+                ((0,5).into(),ObjectInfo::Death),
+                ((1,5).into(),ObjectInfo::Death),
+                ((2,5).into(),ObjectInfo::Death),
+                ((4,0).into(),ObjectInfo::Death),
+                ((5,0).into(),ObjectInfo::Death),
+                ((6,0).into(),ObjectInfo::Death),
+                ((6,0).into(),ObjectInfo::Death),
+                ((1,2).into(), ObjectInfo::Box),
+                ((5,2).into(), ObjectInfo::Box),
+                ((1,0).into(), ObjectInfo::Goal),
+                ((3,2).into(), ObjectInfo::Trap),
+                ((5,5).into(), ObjectInfo::Goal),
+                ((4,4).into(), ObjectInfo::Door(Direction::East, false)),
+                ((0,1).into(), ObjectInfo::Door(Direction::East, false)),
+                ((2,1).into(), ObjectInfo::Door(Direction::East, false)),
+                ((6,4).into(), ObjectInfo::ToggleButton((0,1).into(), 0)),
+                ((2,0).into(), ObjectInfo::ToggleButton((4,4).into(), 0)),
+                ((6,1).into(), ObjectInfo::PushButton((2,1).into(), 0)),
+
+            ]),
+            "Help Me Out!" => Self::make_world(
+                7,
+                4,
+                &[
+                    &[T,T,T,T,T,T,T],
+                    &[F,F,T,F,F,F,T],
+                    &[T,T,T,F,T,T,T],
+                    &[T,T,T,F,T,T,T],
+                ],
+                1
+            )
+            .add_objects(vec![
+                ((1,0).into(),ObjectInfo::Door(Direction::North, false)),
+                ((4,0).into(),ObjectInfo::Door(Direction::North, false)),
+                ((1,2).into(),ObjectInfo::Door(Direction::North, false)),
+                ((1,3).into(),ObjectInfo::Door(Direction::North, false)),
+                ((0,0).into(), ObjectInfo::Goal),
+                ((3,0).into(), ObjectInfo::Goal),
+                ((2,3).into(), ObjectInfo::Cat),
+                ((4,3).into(), ObjectInfo::Cat),
+                ((0,2).into(), ObjectInfo::ToggleButton((1,0).into(), 0)),
+                ((0,3).into(), ObjectInfo::ToggleButton((4,0).into(), 0)),
+                ((4,2).into(), ObjectInfo::PushButton((1,3).into(), 0)),
+                ((5,2).into(), ObjectInfo::PushButton((1,2).into(), 0)),
+
+            ]),
             "Pushing My Boxes" => Self::make_world(
                 8,
                 6,
