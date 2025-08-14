@@ -200,23 +200,14 @@ impl World {
             self.try_movement(dir, position, push_proposal);
         }
         // Set winning animation
-        if self.is_win() {
-            if !self.won {
-                audio::play("win");
-                for point in self.cells_iterator() {
-                    for i in 0..self[point].len() {
-                        if self[point][i].obj_type == ObjectInfo::Cat {
-                            self[point][i].animation.duration(30);
-                            self[point][i].animation.set(30);
-                            self.edit_history
-                                .push((self.move_id, Edit::SetAnimation(point, i, 0)));
-                        }
-                        if self[point][i].obj_type == ObjectInfo::Goal {
-                            self[point][i].animation.duration(30);
-                            self[point][i].animation.set(30);
-                            self.edit_history
-                                .push((self.move_id, Edit::SetAnimation(point, i, 0)));
-                        }
+        if self.is_win() && !self.won {
+            audio::play("win");
+            for point in self.cells_iterator() {
+                for i in 0..self[point].len() {
+                    if self[point][i].obj_type == ObjectInfo::Cat
+                        || self[point][i].obj_type == ObjectInfo::Goal
+                    {
+                        self.set_animation(point, i, 30, 30);
                     }
                 }
             }
@@ -332,36 +323,34 @@ impl World {
             audio::play("acid_bubbles");
             self.dead = true;
         }
-        // Push buttons
-        if let Some(Object {
-            obj_type: ObjectInfo::PushButton(point, wiring_idx),
-            ..
-        }) = old
-            .iter()
-            .find(|v| matches!(v.obj_type, ObjectInfo::PushButton(..)))
-        {
-            self.set_wiring(*point, *wiring_idx, covered);
-        }
-        // Toggle buttons
-        if let Some(Object {
-            obj_type: ObjectInfo::ToggleButton(point, wiring_idx),
-            ..
-        }) = old
-            .iter()
-            .find(|v| matches!(v.obj_type, ObjectInfo::ToggleButton(..)))
-        {
-            if covered {
-                let current =
-                    self.wiring[(point.x() + point.y() * self.width as i32) as usize][*wiring_idx];
-                self.set_wiring(*point, *wiring_idx, !current);
+        for i in 0..self[point].len() {
+            match self[point][i].obj_type {
+                ObjectInfo::PushButton(wire_dst, wiring_idx) => {
+                    if self.set_wiring(wire_dst, wiring_idx, covered) {
+                        self.set_animation(point, i, if covered { 1 } else { 0 }, 1);
+                    }
+                }
+                ObjectInfo::ToggleButton(wire_dst, wiring_idx) => {
+                    if covered {
+                        let current = self.wiring
+                            [(point.x() + point.y() * self.width as i32) as usize][wiring_idx];
+                        if self.set_wiring(wire_dst, wiring_idx, !current) {
+                            self.set_animation(point, i, if !current { 1 } else { 0 }, 1);
+                        }
+                    }
+                }
+                _ => {}
             }
         }
     }
     /// Set the activity status of a wire.
     /// Will update wired objects like doors.
-    pub fn set_wiring(&mut self, point: Point, wiring_idx: usize, active: bool) {
+    pub fn set_wiring(&mut self, point: Point, wiring_idx: usize, active: bool) -> bool {
         let move_id = self.move_id;
         let wire_loc = (point.x() + point.y() * self.width as i32) as usize;
+        if self.wiring[wire_loc][wiring_idx] == active {
+            return false;
+        }
         self.edit_history.push((
             move_id,
             Edit::Wiring(point, wiring_idx, self.wiring[wire_loc][wiring_idx]),
@@ -379,16 +368,20 @@ impl World {
                             Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
                         ));
                         audio::play("door");
-                        let cur_anim = self[point][i].animation.get();
-                        self.edit_history
-                            .push((move_id, Edit::SetAnimation(point, i, cur_anim)));
-                        self[point][i].animation.duration(5);
-                        self[point][i].animation.set(if old_open { 0 } else { 2 });
+                        self.set_animation(point, i, if old_open { 0 } else { 2 }, 5);
                     }
                 }
                 _ => {}
             }
         }
+        return true;
+    }
+    pub fn set_animation(&mut self, point: Point, idx: usize, anim: i32, duration: usize) {
+        let old = self[point][idx].animation.get();
+        self.edit_history
+            .push((self.move_id, Edit::SetAnimation(point, idx, old)));
+        self[point][idx].animation.set_duration(duration);
+        self[point][idx].animation.set(anim);
     }
     pub fn _print_state(&self) {
         for y in 0..self.height {

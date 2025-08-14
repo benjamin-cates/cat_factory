@@ -98,8 +98,20 @@ impl Object {
                 sprite!("factory/right_wall_short", x = x + 37, y = y - 34)
             }
             ObjectInfo::WallRight(false) => sprite!("factory/right_wall", x = x + 38, y = y - 27),
-            ObjectInfo::PushButton(..) => sprite!("house/push_button", x = x, y = y),
-            ObjectInfo::ToggleButton(..) => sprite!("house/toggle_button", x = x, y = y),
+            ObjectInfo::PushButton(..) => {
+                if anim == 0 {
+                    sprite!("house/push_button_open", x = x, y = y)
+                } else {
+                    sprite!("house/push_button", x = x, y = y)
+                }
+            }
+            ObjectInfo::ToggleButton(..) => {
+                if anim == 0 {
+                    sprite!("house/toggle_button_open", x = x, y = y)
+                } else {
+                    sprite!("house/toggle_button", x = x, y = y)
+                }
+            }
             ObjectInfo::Door(Direction::South | Direction::North, _) => {
                 if anim == 0 {
                     sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
