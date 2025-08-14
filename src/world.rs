@@ -333,7 +333,8 @@ impl World {
                 ObjectInfo::ToggleButton(wire_dst, wiring_idx) => {
                     if covered {
                         let current = self.wiring
-                            [(point.x() + point.y() * self.width as i32) as usize][wiring_idx];
+                            [(wire_dst.x() + wire_dst.y() * self.width as i32) as usize]
+                            [wiring_idx];
                         if self.set_wiring(wire_dst, wiring_idx, !current) {
                             self.set_animation(point, i, if !current { 1 } else { 0 }, 1);
                         }
