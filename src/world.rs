@@ -208,6 +208,7 @@ impl World {
         if self.conveyance == 1 {
             self.move_id -= 1;
             let mut movements = vec![];
+            let mut play_sound = false;
             for position in self.cells_iterator() {
                 let mut push_proposal = [false; 8];
                 let mut dir: Option<Direction> = None;
@@ -217,6 +218,7 @@ impl World {
                         || cell.obj_type == ObjectInfo::Box
                     {
                         push_proposal[i] = true;
+                        play_sound = true;
                     }
                     match cell.obj_type {
                         ObjectInfo::RotateableConveyor(d, _, false)
@@ -230,6 +232,9 @@ impl World {
                 if let Some(dir) = dir {
                     movements.push((dir, position, push_proposal));
                 }
+            }
+            if play_sound && self.sounds {
+                audio::play("conveyor")
             }
             for (dir, position, push_proposal) in movements {
                 self.try_movement(dir, position, push_proposal);
