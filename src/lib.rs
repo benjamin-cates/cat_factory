@@ -1,5 +1,5 @@
 use crate::{
-    levels::PUZZLE_PAGES,
+    levels::{LevelBuilder, PUZZLE_PAGES},
     menu::{Menu, button},
     util::Direction,
     world::World,
@@ -24,9 +24,9 @@ impl GameState {
     fn new() -> Self {
         Self {
             solved_maps: vec![vec![false; 8]; 10],
-            world: World::get_template("double_cat"),
+            world: LevelBuilder::get_template("double_cat"),
             menu: Menu::PuzzlePage(0, 0),
-            menu_world: World::get_template(
+            menu_world: LevelBuilder::get_template(
                 ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
             ),
         }
@@ -35,7 +35,7 @@ impl GameState {
         let (new_menu, world_name) = self.menu.run(&self.solved_maps);
         self.menu = new_menu;
         if world_name.len() != 0 {
-            self.world = World::get_template(world_name);
+            self.world = LevelBuilder::get_template(world_name);
         }
         if let Menu::World(page_id, puzzle_id) = self.menu {
             self.world.draw();
@@ -47,7 +47,7 @@ impl GameState {
                 self.world.undo();
             }
             if keyboard::get().key_r().just_pressed() || gamepad::get(0).y.just_pressed() {
-                self.world = World::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
+                self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
@@ -90,21 +90,24 @@ impl GameState {
                     || turbo::keyboard::get().enter().just_pressed()
                     || turbo::gamepad::get(0).a.just_pressed()
                 {
-                    self.world = World::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
+                    self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
                 }
                 return;
             } else {
-                if turbo::gamepad::get(0).left.just_pressed() {
-                    self.world.movement(Direction::West)
-                }
-                if turbo::gamepad::get(0).right.just_pressed() {
-                    self.world.movement(Direction::East)
-                }
-                if turbo::gamepad::get(0).up.just_pressed() {
-                    self.world.movement(Direction::North)
-                }
-                if turbo::gamepad::get(0).down.just_pressed() {
-                    self.world.movement(Direction::South)
+                self.world.convey();
+                if self.world.conveyance == 0 {
+                    if turbo::gamepad::get(0).left.just_pressed() {
+                        self.world.movement(Direction::West)
+                    }
+                    if turbo::gamepad::get(0).right.just_pressed() {
+                        self.world.movement(Direction::East)
+                    }
+                    if turbo::gamepad::get(0).up.just_pressed() {
+                        self.world.movement(Direction::North)
+                    }
+                    if turbo::gamepad::get(0).down.just_pressed() {
+                        self.world.movement(Direction::South)
+                    }
                 }
             }
         } else {
@@ -117,7 +120,7 @@ impl GameState {
             );
             camera::set_xy(center.0 + 95, center.1 - 30);
             if gamepad::get(0).x.just_pressed() || (tick() % 600 == 0 && random::u8() < 128) {
-                self.menu_world = World::get_template(
+                self.menu_world = LevelBuilder::get_template(
                     ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
                 );
             }

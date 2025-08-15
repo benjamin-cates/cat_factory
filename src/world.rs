@@ -48,6 +48,10 @@ pub struct World {
     pub caption: String,
     /// Hint to only show when the user clicks the button
     pub hint: String,
+    /// Conveyor belt timer
+    pub conveyance: u32,
+    /// Whether to play sounds or not
+    pub sounds: bool,
 }
 
 impl World {
@@ -91,8 +95,20 @@ impl World {
         }
     }
     /// Returns true if the world is in a win state
-    pub fn is_win(&self) -> bool {
-        return WIN_FUNCTIONS[self.win_function](&self);
+    pub fn check_win(&mut self) {
+        if WIN_FUNCTIONS[self.win_function](&self) && !self.won {
+            audio::play("win");
+            for point in self.cells_iterator() {
+                for i in 0..self[point].len() {
+                    if self[point][i].obj_type == ObjectInfo::Cat
+                        || self[point][i].obj_type == ObjectInfo::Goal
+                    {
+                        self.set_animation(point, i, 30, 30);
+                    }
+                }
+            }
+            self.won = true;
+        }
     }
     /// Summons an object at that point
     pub fn summon_object(&mut self, point: Point, obj: ObjectInfo) {
@@ -187,6 +203,42 @@ impl World {
         }
         .map(|point| (point.0 as i32, point.1 as i32).into())
     }
+    /// Runs conveyor belt logic
+    pub fn convey(&mut self) {
+        if self.conveyance == 1 {
+            self.move_id -= 1;
+            let mut movements = vec![];
+            for position in self.cells_iterator() {
+                let mut push_proposal = [false; 8];
+                let mut dir: Option<Direction> = None;
+                for (i, cell) in self[position].iter().enumerate() {
+                    if cell.obj_type == ObjectInfo::Cat
+                        || cell.obj_type == ObjectInfo::Goal
+                        || cell.obj_type == ObjectInfo::Box
+                    {
+                        push_proposal[i] = true;
+                    }
+                    match cell.obj_type {
+                        ObjectInfo::RotateableConveyor(d, _, false)
+                        | ObjectInfo::RotateableConveyor(_, d, true)
+                        | ObjectInfo::ToggleableConveyor(d, true) => {
+                            dir = Some(d);
+                        }
+                        _ => {}
+                    }
+                }
+                if let Some(dir) = dir {
+                    movements.push((dir, position, push_proposal));
+                }
+            }
+            for (dir, position, push_proposal) in movements {
+                self.try_movement(dir, position, push_proposal);
+                self.check_win();
+            }
+            self.move_id += 1;
+        }
+        self.conveyance = self.conveyance.max(1) - 1;
+    }
     /// Run a movement command on the world
     pub fn movement(&mut self, dir: Direction) {
         let num_edits_before = self.edit_history.len();
@@ -199,20 +251,7 @@ impl World {
             }
             self.try_movement(dir, position, push_proposal);
         }
-        // Set winning animation
-        if self.is_win() && !self.won {
-            audio::play("win");
-            for point in self.cells_iterator() {
-                for i in 0..self[point].len() {
-                    if self[point][i].obj_type == ObjectInfo::Cat
-                        || self[point][i].obj_type == ObjectInfo::Goal
-                    {
-                        self.set_animation(point, i, 30, 30);
-                    }
-                }
-            }
-            self.won = true;
-        }
+        self.check_win();
         if num_edits_before != self.edit_history.len() {
             self.move_id += 1;
         }
@@ -283,13 +322,6 @@ impl World {
             && point.y() >= 0
             && point.y() < self.height as i32
     }
-    /// Add list of objects and return self
-    pub fn add_objects(mut self, list: Vec<(Point, ObjectInfo)>) -> Self {
-        for (pos, obj) in list {
-            self.summon_object(pos, obj);
-        }
-        self
-    }
     /// Move item at point old_location and index in the direction dir
     pub fn move_to(&mut self, old_location: Point, index: usize, dir: Direction) {
         let mut obj = self[old_location].remove(index);
@@ -340,6 +372,12 @@ impl World {
                         }
                     }
                 }
+                ObjectInfo::RotateableConveyor(_, _, _)
+                | ObjectInfo::ToggleableConveyor(_, true) => {
+                    if covered {
+                        self.conveyance = 15;
+                    }
+                }
                 _ => {}
             }
         }
@@ -368,8 +406,38 @@ impl World {
                             move_id,
                             Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
                         ));
-                        audio::play("door");
+                        if self.sounds {
+                            audio::play("door");
+                        }
                         self.set_animation(point, i, if old_open { 0 } else { 2 }, 5);
+                    }
+                }
+                ObjectInfo::RotateableConveyor(dir1, dir2, ref mut on) => {
+                    let old_on = *on;
+                    *on = new_wiring.iter().fold(false, |a, b| a ^ b);
+                    if *on != old_on {
+                        self.edit_history.push((
+                            move_id,
+                            Edit::ChangeObjInfo(
+                                point,
+                                i,
+                                ObjectInfo::RotateableConveyor(dir1, dir2, old_on),
+                            ),
+                        ));
+                    }
+                }
+                ObjectInfo::ToggleableConveyor(dir, ref mut on) => {
+                    let old_on = *on;
+                    *on = new_wiring.iter().fold(false, |a, b| a ^ b);
+                    if *on != old_on {
+                        self.edit_history.push((
+                            move_id,
+                            Edit::ChangeObjInfo(
+                                point,
+                                i,
+                                ObjectInfo::ToggleableConveyor(dir, old_on),
+                            ),
+                        ));
                     }
                 }
                 _ => {}
@@ -377,6 +445,7 @@ impl World {
         }
         return true;
     }
+    /// Set the animation to the given value with given duration and log animation in history
     pub fn set_animation(&mut self, point: Point, idx: usize, anim: i32, duration: usize) {
         let old = self[point][idx].animation.get();
         self.edit_history

@@ -21,6 +21,8 @@ pub enum ObjectInfo {
     Door(Direction, bool),
     Trap,
     Death,
+    ToggleableConveyor(Direction, bool),
+    RotateableConveyor(Direction, Direction, bool),
 }
 
 #[turbo::serialize]
@@ -56,6 +58,8 @@ impl Object {
             ObjectInfo::ToggleButton(..) => -2000,
             ObjectInfo::Door(..) => 510,
             ObjectInfo::Death => -500,
+            ObjectInfo::ToggleableConveyor(..) => -500,
+            ObjectInfo::RotateableConveyor(..) => -500,
         }
     }
     pub fn draw(&mut self) {
@@ -63,7 +67,7 @@ impl Object {
         let y = self.draw_pos.1.get() as i32;
         let anim = self.animation.get();
         match self.obj_type {
-            ObjectInfo::Trap => sprite!("trap", x = x, y = y,),
+            // OBJECTS
             ObjectInfo::Box => sprite!("box", x = x - 1, y = y - 11),
             ObjectInfo::Cat => {
                 sprite!(
@@ -73,7 +77,6 @@ impl Object {
                     opacity = (1.0 - anim as f32 / 8.0).max(0.0)
                 );
             }
-            ObjectInfo::Barrier => {}
             ObjectInfo::Goal => {
                 if anim == 0 {
                     sprite!("goal", x = x, y = y - 16)
@@ -89,6 +92,12 @@ impl Object {
                     sprite!("goal6", x = x, y = y - 16 - (anim - 8) * 10)
                 }
             }
+            // TRAPS
+            ObjectInfo::Trap => sprite!("trap", x = x, y = y,),
+            ObjectInfo::Death => sprite!("factory/acid", x = x, y = y),
+
+            // WALLS
+            ObjectInfo::Barrier => {}
             ObjectInfo::WallBack(true) => sprite!("factory/front_wall", x = x, y = y - 3),
             ObjectInfo::WallBack(false) => sprite!("factory/back_wall2", x = x, y = (y - 32)),
             ObjectInfo::WallFront => sprite!("factory/front_wall", x = x + 14, y = y + 25),
@@ -98,6 +107,8 @@ impl Object {
                 sprite!("factory/right_wall_short", x = x + 37, y = y - 34)
             }
             ObjectInfo::WallRight(false) => sprite!("factory/right_wall", x = x + 38, y = y - 27),
+
+            // BUTTONS
             ObjectInfo::PushButton(..) => {
                 if anim == 0 {
                     sprite!("house/push_button_open", x = x, y = y)
@@ -112,6 +123,8 @@ impl Object {
                     sprite!("house/toggle_button", x = x, y = y)
                 }
             }
+
+            // DOORS
             ObjectInfo::Door(Direction::South | Direction::North, _) => {
                 if anim == 0 {
                     sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
@@ -130,13 +143,43 @@ impl Object {
                     sprite!("factory/door_horizontal_open", x = x + 6, y = y - 7)
                 }
             }
-            ObjectInfo::Death => {
-                sprite!("factory/acid", x = x, y = y)
+            // CONVEYOR BELTS
+            ObjectInfo::RotateableConveyor(dir, phant, false)
+            | ObjectInfo::RotateableConveyor(phant, dir, true) => {
+                match dir {
+                    Direction::North => sprite!("factory/conveyor_up", x = x, y = y),
+                    Direction::South => sprite!("factory/conveyor_down", x = x, y = y),
+                    Direction::East => sprite!("factory/conveyor_right", x = x, y = y),
+                    Direction::West => sprite!("factory/conveyor_left", x = x, y = y),
+                }
+                match phant {
+                    Direction::North => sprite!("factory/phantom_up", x = x, y = y),
+                    Direction::South => sprite!("factory/phantom_down", x = x, y = y),
+                    Direction::East => sprite!("factory/phantom_right", x = x, y = y),
+                    Direction::West => sprite!("factory/phantom_left", x = x, y = y),
+                }
             }
+            ObjectInfo::ToggleableConveyor(phant, false) => {
+                sprite!("factory/conveyor_empty", x = x, y = y);
+                match phant {
+                    Direction::North => sprite!("factory/phantom_up", x = x, y = y),
+                    Direction::South => sprite!("factory/phantom_down", x = x, y = y),
+                    Direction::East => sprite!("factory/phantom_right", x = x, y = y),
+                    Direction::West => sprite!("factory/phantom_left", x = x, y = y),
+                }
+            }
+            ObjectInfo::ToggleableConveyor(dir, true) => match dir {
+                Direction::North => sprite!("factory/conveyor_up", x = x, y = y),
+                Direction::South => sprite!("factory/conveyor_down", x = x, y = y),
+                Direction::East => sprite!("factory/conveyor_right", x = x, y = y),
+                Direction::West => sprite!("factory/conveyor_left", x = x, y = y),
+            },
         }
     }
     pub fn test_push_by(&self, pusher: &ObjectInfo) -> MoveType {
         match self.obj_type {
+            ObjectInfo::RotateableConveyor(..) => MoveType::MoveOver,
+            ObjectInfo::ToggleableConveyor(..) => MoveType::MoveOver,
             ObjectInfo::Trap => MoveType::MoveOver,
             ObjectInfo::Box => {
                 if *pusher == ObjectInfo::Goal {

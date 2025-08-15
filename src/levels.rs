@@ -20,24 +20,30 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
 pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
     &["Movement", "Traps", "Buttons", "Box Bridge"],
     &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze"],
+    &["Conveyor Alley"],
     &[
         "Cat Coordination",
         "Help Me Out!",
         "Parking Lot",
         "Pushing My Boxes",
     ],
-    &["one", "two", "three"],
+    &["one", "two", "three", "Conveyance Test"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
     "Pushing boxes",
+    "Automation Area",
     "Double cat world",
     "Junk levels (don't play)",
 ];
 
-impl World {
+pub struct LevelBuilder {
+    world: World,
+}
+
+impl LevelBuilder {
     /// Make a new world using the floors as a 2d bool array of where the floors will be.
-    pub fn make_world(
+    fn make_level(
         width: usize,
         height: usize,
         floors: &'static [&'static [bool]],
@@ -50,17 +56,21 @@ impl World {
             height
         );
         let mut out = Self {
-            win_function,
-            width,
-            height,
-            inner: vec![vec![]; width * height],
-            wiring: vec![[false; 4]; width * height],
-            move_id: 0,
-            edit_history: vec![],
-            dead: false,
-            won: false,
-            caption: "".to_string(),
-            hint: "".to_string(),
+            world: World {
+                win_function,
+                width,
+                height,
+                inner: vec![vec![]; width * height],
+                wiring: vec![[false; 4]; width * height],
+                move_id: 0,
+                edit_history: vec![],
+                dead: false,
+                won: false,
+                caption: "".to_string(),
+                hint: "".to_string(),
+                conveyance: 0,
+                sounds: false,
+            },
         };
         for y in 0..height {
             assert_eq!(
@@ -72,53 +82,86 @@ impl World {
             );
             for x in 0..width {
                 if !floors[y][x] {
-                    out.summon_object((x, y).into(), ObjectInfo::Barrier);
+                    out.world.summon_object((x, y).into(), ObjectInfo::Barrier);
                     continue;
                 }
                 if y == height - 1 || floors[y + 1][x] == false {
-                    out.summon_object((x, y).into(), ObjectInfo::WallFront);
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallFront);
                 }
                 if y == 0 {
-                    out.summon_object((x, y).into(), ObjectInfo::WallBack(false));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallBack(false));
                 } else if floors[y - 1][x] == false {
                     // If any floors are above, draw this wall short
                     let is_short = (0..(y - 1)).any(|i| floors[i][x]);
-                    out.summon_object((x, y).into(), ObjectInfo::WallBack(is_short));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallBack(is_short));
                 }
                 if x == width - 1 {
-                    out.summon_object((x, y).into(), ObjectInfo::WallRight(false));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallRight(false));
                 } else if floors[y][x + 1] == false {
                     // If any floors are to the right, draw this wall short
                     let is_short = (0..y).any(|i| floors[i][x + 1]);
-                    out.summon_object((x, y).into(), ObjectInfo::WallRight(is_short));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallRight(is_short));
                 }
                 if x == 0 {
-                    out.summon_object((x, y).into(), ObjectInfo::WallLeft(true));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallLeft(true));
                 } else if floors[y][x - 1] == false {
                     // Is short if it is on the far left, or there is no "back" wall below it
                     let is_short = (0..y).any(|i| floors[i][x - 1]);
-                    out.summon_object((x, y).into(), ObjectInfo::WallLeft(is_short));
+                    out.world
+                        .summon_object((x, y).into(), ObjectInfo::WallLeft(is_short));
                 }
             }
         }
         out
     }
+    fn finish(mut self) -> World {
+        self.world.edit_history.clear();
+        self.world.move_id = 0;
+        self.world.sounds = true;
+        self.world
+    }
     /// Adds a caption and returns the self
-    pub fn add_caption(mut self, str: &'static str) -> Self {
-        self.caption = String::from(str);
+    fn with_caption(mut self, str: &'static str) -> Self {
+        self.world.caption = String::from(str);
         self
     }
     /// Adds a hint and returns the self
-    pub fn add_hint(mut self, str: &'static str) -> Self {
-        self.hint = String::from(str);
+    fn with_hint(mut self, str: &'static str) -> Self {
+        self.world.hint = String::from(str);
+        self
+    }
+    /// Add an object to the world
+    fn with_obj(mut self, point: (i32, i32), obj: ObjectInfo) -> Self {
+        self.world.summon_object(point.into(), obj);
+        self
+    }
+    /// Add an object to the world with a starting animation
+    fn with_obj_anim(mut self, point: (i32, i32), obj: ObjectInfo, anim: i32) -> Self {
+        self.world.summon_object(point.into(), obj);
+        self.world[point.into()]
+            .last_mut()
+            .unwrap()
+            .animation
+            .set(anim);
+        self
+    }
+    /// Set wiring in certain location
+    fn with_wiring(mut self, point: (i32, i32), idx: usize, active: bool) -> Self {
+        self.world.set_wiring(point.into(), idx, active);
         self
     }
     /// Returns a template world based on the given name
-    pub fn get_template(name: &'static str) -> Self {
+    pub fn get_template(name: &'static str) -> World {
         const T: bool = true;
         const F: bool = false;
         match name {
-            "menu1" => Self::make_world(
+            "menu1" => Self::make_level(
                 5,
                 5,
                 &[
@@ -130,13 +173,12 @@ impl World {
                 ],
                 0,
             )
-            .add_objects(vec![
-                ((4, 4).into(), ObjectInfo::Cat),
-                ((0, 4).into(), ObjectInfo::ToggleButton((3, 2).into(), 0)),
-                ((3, 2).into(), ObjectInfo::Door(Direction::North, false)),
-                ((2, 2).into(), ObjectInfo::Goal),
-            ]),
-            "menu2" => Self::make_world(
+            .with_obj((4, 4), ObjectInfo::Cat)
+            .with_obj((0, 4), ObjectInfo::ToggleButton((3, 2).into(), 0))
+            .with_obj((3, 2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((2, 2), ObjectInfo::Goal)
+            .finish(),
+            "menu2" => Self::make_level(
                 5,
                 5,
                 &[
@@ -148,11 +190,10 @@ impl World {
                 ],
                 0,
             )
-            .add_objects(vec![
-                ((0, 0).into(), ObjectInfo::Cat),
-                ((4, 4).into(), ObjectInfo::Goal),
-            ]),
-            "menu3" => Self::make_world(
+            .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .finish(),
+            "menu3" => Self::make_level(
                 5,
                 5,
                 &[
@@ -164,11 +205,10 @@ impl World {
                 ],
                 0,
             )
-            .add_objects(vec![
-                ((0, 0).into(), ObjectInfo::Cat),
-                ((4, 4).into(), ObjectInfo::Goal),
-            ]),
-            "menu4" => Self::make_world(
+            .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .finish(),
+            "menu4" => Self::make_level(
                 5,
                 5,
                 &[
@@ -180,13 +220,12 @@ impl World {
                 ],
                 0,
             )
-            .add_objects(vec![
-                ((0, 0).into(), ObjectInfo::Cat),
-                ((2, 4).into(), ObjectInfo::ToggleButton((4, 3).into(), 0)),
-                ((4, 3).into(), ObjectInfo::Door(Direction::East, false)),
-                ((4, 4).into(), ObjectInfo::Goal),
-            ]),
-            "Movement" => Self::make_world(
+            .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((2, 4), ObjectInfo::ToggleButton((4, 3).into(), 0))
+            .with_obj((4, 3), ObjectInfo::Door(Direction::East, false))
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .finish(),
+            "Movement" => Self::make_level(
                 6,
                 3,
                 &[
@@ -196,83 +235,82 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0, 1).into(), ObjectInfo::Goal),
-                ((2, 0).into(), ObjectInfo::Box),
-                ((3, 1).into(), ObjectInfo::Box),
-                ((4, 2).into(), ObjectInfo::Box),
-                ((5, 1).into(), ObjectInfo::Cat),
-            ])
-            .add_caption("It looks like this cat has escaped his box at the Cat Factory! Can you help guide him back? Press the WASD or arrow keys to move."),
-            "Traps" => Self::make_world(
+            .with_obj((0, 1), ObjectInfo::Goal)
+            .with_obj((2, 0), ObjectInfo::Box)
+            .with_obj((3, 1), ObjectInfo::Box)
+            .with_obj((4, 2), ObjectInfo::Box)
+            .with_obj((5, 1), ObjectInfo::Cat)
+            .with_caption(
+                "It looks like this cat has escaped his box at the Cat Factory! \
+                Can you help guide him back? Press the WASD or arrow keys to move.",
+            )
+            .finish(),
+            "Traps" => Self::make_level(
                 5,
                 3,
-                &[
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
-                ],
+                &[&[T, T, T, T, T], &[T, T, T, T, T], &[T, T, T, T, T]],
                 1,
             )
-            .add_objects(vec![
-                ((0,0).into(), ObjectInfo::Goal),
-                ((1,0).into(), ObjectInfo::Death),
-                ((1,1).into(), ObjectInfo::Death),
-                ((3,1).into(), ObjectInfo::Trap),
-                ((3,2).into(), ObjectInfo::Trap),
-                ((4,2).into(), ObjectInfo::Cat),
-            ])
-            .add_caption(
-                "Avoid the traps! ACID kills cats immediately and the X prevents cats from moving. Press E to undo or press R to reset the level."
-            ),
-            "Buttons" => Self::make_world(
+            .with_obj((0, 0), ObjectInfo::Goal)
+            .with_obj((1, 0), ObjectInfo::Death)
+            .with_obj((1, 1), ObjectInfo::Death)
+            .with_obj((3, 1), ObjectInfo::Trap)
+            .with_obj((3, 2), ObjectInfo::Trap)
+            .with_obj((4, 2), ObjectInfo::Cat)
+            .with_caption(
+                "Avoid the traps! ACID kills cats immediately and the X prevents cats from moving\
+                . Press E to undo or press R to reset the level.",
+            )
+            .finish(),
+            "Buttons" => Self::make_level(
                 7,
                 4,
                 &[
-                    &[T,F,T,T,T,T,T],
-                    &[T,F,T,T,T,T,T],
-                    &[T,F,T,T,T,T,T],
-                    &[T,T,T,T,T,T,T],
+                    &[T, F, T, T, T, T, T],
+                    &[T, F, T, T, T, T, T],
+                    &[T, F, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T],
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0,0).into(), ObjectInfo::Goal),
-                ((0,1).into(), ObjectInfo::Door(Direction::East, false)),
-                ((0,2).into(), ObjectInfo::Door(Direction::East, false)),
-                ((3,0).into(), ObjectInfo::ToggleButton((0,1).into(), 0)),
-                ((5,0).into(), ObjectInfo::PushButton((0,2).into(), 0)),
-                ((4,1).into(), ObjectInfo::Box),
-                ((3,3).into(), ObjectInfo::Cat),
-            ])
-            .add_caption("Buttons can open doors. Square buttons toggle on and off. Circle buttons must be held down."),
-            "Acid River" => Self::make_world(
+            .with_obj((0, 0), ObjectInfo::Goal)
+            .with_obj((0, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((0, 2), ObjectInfo::Door(Direction::East, false))
+            .with_obj((3, 0), ObjectInfo::ToggleButton((0, 1).into(), 0))
+            .with_obj((5, 0), ObjectInfo::PushButton((0, 2).into(), 0))
+            .with_obj((4, 1), ObjectInfo::Box)
+            .with_obj((3, 3), ObjectInfo::Cat)
+            .with_caption(
+                "Buttons can open doors. Square buttons toggle on and off. \
+                Circle buttons must be held down.",
+            )
+            .finish(),
+            "Acid River" => Self::make_level(
                 5,
                 5,
                 &[
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
-                    &[T,T,T,T,T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0,4).into(), ObjectInfo::Goal),
-                ((1,0).into(), ObjectInfo::Death),
-                ((1,1).into(), ObjectInfo::Death),
-                ((1,2).into(), ObjectInfo::Door(Direction::North, false)),
-                ((0,3).into(), ObjectInfo::Door(Direction::East, false)),
-                ((1,3).into(), ObjectInfo::Death),
-                ((1,4).into(), ObjectInfo::Death),
-                ((0,0).into(), ObjectInfo::PushButton((0,3).into(),0)),
-                ((0,1).into(), ObjectInfo::PushButton((1,2).into(),0)),
-                ((4,2).into(), ObjectInfo::Cat),
-                ((3,1).into(), ObjectInfo::Box),
-                ((3,3).into(), ObjectInfo::Box),
-            ]),
-            "Box Bridge" => Self::make_world(
+            .with_obj((0, 4), ObjectInfo::Goal)
+            .with_obj((1, 0), ObjectInfo::Death)
+            .with_obj((1, 1), ObjectInfo::Death)
+            .with_obj((1, 2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((0, 3), ObjectInfo::Door(Direction::East, false))
+            .with_obj((1, 3), ObjectInfo::Death)
+            .with_obj((1, 4), ObjectInfo::Death)
+            .with_obj((0, 0), ObjectInfo::PushButton((0, 3).into(), 0))
+            .with_obj((0, 1), ObjectInfo::PushButton((1, 2).into(), 0))
+            .with_obj((4, 2), ObjectInfo::Cat)
+            .with_obj((3, 1), ObjectInfo::Box)
+            .with_obj((3, 3), ObjectInfo::Box)
+            .finish(),
+            "Box Bridge" => Self::make_level(
                 5,
                 4,
                 &[
@@ -283,39 +321,90 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0, 0).into(), ObjectInfo::Goal),
-                ((0, 1).into(), ObjectInfo::Door(Direction::East, false)),
-                ((3, 0).into(), ObjectInfo::PushButton((0, 1).into(), 0)),
-                ((3, 1).into(), ObjectInfo::Death),
-                ((3, 2).into(), ObjectInfo::Box),
-                ((1, 2).into(), ObjectInfo::Box),
-                ((4, 2).into(), ObjectInfo::Cat),
-            ])
-            .add_caption("Boxes can be pushed over acid. Try to get back to your box!!"),
-            "Pushing My Buttons" => Self::make_world(
-                6,5,
+            .with_obj((0, 0), ObjectInfo::Goal)
+            .with_obj((0, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((3, 0), ObjectInfo::PushButton((0, 1).into(), 0))
+            .with_obj((3, 1), ObjectInfo::Death)
+            .with_obj((3, 2), ObjectInfo::Box)
+            .with_obj((1, 2), ObjectInfo::Box)
+            .with_obj((4, 2), ObjectInfo::Cat)
+            .with_caption("Boxes can be pushed over acid. Try to get back to your box!!")
+            .finish(),
+            "Pushing My Buttons" => Self::make_level(
+                6,
+                5,
                 &[
-                    &[T,T,T,T,T,T],
-                    &[T,T,T,F,F,F],
-                    &[T,T,T,T,T,T],
-                    &[T,T,T,T,F,F],
-                    &[T,T,T,T,T,T],
+                    &[T, T, T, T, T, T],
+                    &[T, T, T, F, F, F],
+                    &[T, T, T, T, T, T],
+                    &[T, T, T, T, F, F],
+                    &[T, T, T, T, T, T],
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((1,0).into(), ObjectInfo::Cat),
-                ((3,0).into(), ObjectInfo::Door(Direction::North, false)),
-                ((4,0).into(), ObjectInfo::Door(Direction::North, false)),
-                ((4,2).into(), ObjectInfo::Door(Direction::North, false)),
-                ((5,0).into(), ObjectInfo::Goal),
-                ((5,4).into(), ObjectInfo::PushButton((3,0).into(),0)),
-                ((5,2).into(), ObjectInfo::ToggleButton((4,0).into(),0)),
-                ((1,4).into(), ObjectInfo::PushButton((4,2).into(),0)),
-                ((2,1).into(), ObjectInfo::Box),
-            ]),
-            "Box Maze" => Self::make_world(
+            .with_obj((1, 0), ObjectInfo::Cat)
+            .with_obj((3, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4, 2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((5, 0), ObjectInfo::Goal)
+            .with_obj((5, 4), ObjectInfo::PushButton((3, 0).into(), 0))
+            .with_obj((5, 2), ObjectInfo::ToggleButton((4, 0).into(), 0))
+            .with_obj((1, 4), ObjectInfo::PushButton((4, 2).into(), 0))
+            .with_obj((2, 1), ObjectInfo::Box)
+            .finish(),
+            "Conveyor Alley" => Self::make_level(
+                6,
+                5,
+                &[
+                    &[T, T, F, F, F, T],
+                    &[T, T, F, F, F, T],
+                    &[T, T, F, T, F, T],
+                    &[T, T, T, T, T, T],
+                    &[T, T, F, F, T, F],
+                ],
+                1,
+            )
+            .with_obj((1, 1), ObjectInfo::Box)
+            .with_obj((0, 2), ObjectInfo::Cat)
+            .with_obj(
+                (1, 3),
+                ObjectInfo::ToggleableConveyor(Direction::East, false),
+            )
+            .with_obj(
+                (2, 3),
+                ObjectInfo::ToggleableConveyor(Direction::East, true),
+            )
+            .with_obj(
+                (3, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, false),
+            )
+            .with_obj(
+                (4, 3),
+                ObjectInfo::RotateableConveyor(Direction::South, Direction::East, false),
+            )
+            .with_obj(
+                (5, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj(
+                (5, 2),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj(
+                (5, 1),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj((4, 4), ObjectInfo::Death)
+            .with_obj((3, 2), ObjectInfo::Death)
+            .with_obj((5, 0), ObjectInfo::Goal)
+            .with_obj((1, 4), ObjectInfo::PushButton((3, 3).into(), 0))
+            .with_obj_anim((1, 0), ObjectInfo::ToggleButton((1, 3).into(), 0), 1)
+            .with_obj_anim((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0), 1)
+            .with_wiring((1, 3), 0, true)
+            .with_wiring((4, 3), 0, true)
+            .with_wiring((3, 3), 1, true)
+            .finish(),
+            "Box Maze" => Self::make_level(
                 8,
                 7,
                 &[
@@ -329,19 +418,113 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((1, 0).into(), ObjectInfo::Goal),
-                ((1, 1).into(), ObjectInfo::Door(Direction::East, false)),
-                ((4, 5).into(), ObjectInfo::Door(Direction::North, false)),
-                ((3, 1).into(), ObjectInfo::Box),
-                ((3, 5).into(), ObjectInfo::Box),
-                ((6, 4).into(), ObjectInfo::Box),
-                ((6, 5).into(), ObjectInfo::Cat),
-                ((3, 2).into(), ObjectInfo::Death),
-                ((3, 3).into(), ObjectInfo::PushButton((4, 5).into(), 0)),
-                ((4, 2).into(), ObjectInfo::PushButton((1, 1).into(), 0)),
-            ]),
-            "Cat Coordination" => Self::make_world(
+            .with_obj((1, 0), ObjectInfo::Goal)
+            .with_obj((1, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((4, 5), ObjectInfo::Door(Direction::North, false))
+            .with_obj((3, 1), ObjectInfo::Box)
+            .with_obj((3, 5), ObjectInfo::Box)
+            .with_obj((6, 4), ObjectInfo::Box)
+            .with_obj((6, 5), ObjectInfo::Cat)
+            .with_obj((3, 2), ObjectInfo::Death)
+            .with_obj((3, 3), ObjectInfo::PushButton((4, 5).into(), 0))
+            .with_obj((4, 2), ObjectInfo::PushButton((1, 1).into(), 0))
+            .finish(),
+            "Conveyance Test" => Self::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                ],
+                1,
+            )
+            .with_obj(
+                (0, 0),
+                ObjectInfo::RotateableConveyor(Direction::South, Direction::West, false),
+            )
+            .with_obj(
+                (0, 1),
+                ObjectInfo::RotateableConveyor(Direction::South, Direction::East, false),
+            )
+            .with_obj(
+                (0, 2),
+                ObjectInfo::RotateableConveyor(Direction::South, Direction::North, false),
+            )
+            .with_obj(
+                (0, 3),
+                ObjectInfo::ToggleableConveyor(Direction::South, true),
+            )
+            .with_obj(
+                (0, 4),
+                ObjectInfo::ToggleableConveyor(Direction::South, false),
+            )
+            .with_obj(
+                (1, 0),
+                ObjectInfo::RotateableConveyor(Direction::East, Direction::North, false),
+            )
+            .with_obj(
+                (1, 1),
+                ObjectInfo::RotateableConveyor(Direction::East, Direction::South, false),
+            )
+            .with_obj(
+                (1, 2),
+                ObjectInfo::RotateableConveyor(Direction::East, Direction::West, false),
+            )
+            .with_obj(
+                (1, 3),
+                ObjectInfo::ToggleableConveyor(Direction::East, true),
+            )
+            .with_obj(
+                (1, 4),
+                ObjectInfo::ToggleableConveyor(Direction::East, false),
+            )
+            .with_obj(
+                (2, 0),
+                ObjectInfo::RotateableConveyor(Direction::West, Direction::North, false),
+            )
+            .with_obj(
+                (2, 1),
+                ObjectInfo::RotateableConveyor(Direction::West, Direction::South, false),
+            )
+            .with_obj(
+                (2, 2),
+                ObjectInfo::RotateableConveyor(Direction::West, Direction::East, false),
+            )
+            .with_obj(
+                (2, 3),
+                ObjectInfo::ToggleableConveyor(Direction::West, true),
+            )
+            .with_obj(
+                (2, 4),
+                ObjectInfo::ToggleableConveyor(Direction::West, false),
+            )
+            .with_obj(
+                (3, 0),
+                ObjectInfo::RotateableConveyor(Direction::North, Direction::East, false),
+            )
+            .with_obj(
+                (3, 1),
+                ObjectInfo::RotateableConveyor(Direction::North, Direction::West, false),
+            )
+            .with_obj(
+                (3, 2),
+                ObjectInfo::RotateableConveyor(Direction::North, Direction::South, false),
+            )
+            .with_obj(
+                (3, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj(
+                (3, 4),
+                ObjectInfo::ToggleableConveyor(Direction::North, false),
+            )
+            .with_obj((4, 4), ObjectInfo::Cat)
+            .with_obj((4, 2), ObjectInfo::Goal)
+            .finish(),
+            "Cat Coordination" => Self::make_level(
                 7,
                 4,
                 &[
@@ -352,82 +535,81 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((6, 1).into(), ObjectInfo::Cat),
-                ((5, 0).into(), ObjectInfo::Door(Direction::North, false)),
-                ((4, 0).into(), ObjectInfo::Goal),
-                ((4, 2).into(), ObjectInfo::Door(Direction::North, false)),
-                ((5, 2).into(), ObjectInfo::Goal),
-                ((1, 0).into(), ObjectInfo::Cat),
-                ((1, 1).into(), ObjectInfo::Box),
-                ((0, 2).into(), ObjectInfo::Box),
-                ((1, 3).into(), ObjectInfo::PushButton((5, 0).into(), 0)),
-                ((2, 3).into(), ObjectInfo::PushButton((4, 2).into(), 0)),
-            ])
-            .add_caption("Uh oh! It looks like two cats escaped their boxes. They both move in the same direction at your command. Both cats have to be in their boxes to ship them away."),
-            "Parking Lot" => Self::make_world(
+            .with_obj((6, 1), ObjectInfo::Cat)
+            .with_obj((5, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4, 0), ObjectInfo::Goal)
+            .with_obj((4, 2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((5, 2), ObjectInfo::Goal)
+            .with_obj((1, 0), ObjectInfo::Cat)
+            .with_obj((1, 1), ObjectInfo::Box)
+            .with_obj((0, 2), ObjectInfo::Box)
+            .with_obj((1, 3), ObjectInfo::PushButton((5, 0).into(), 0))
+            .with_obj((2, 3), ObjectInfo::PushButton((4, 2).into(), 0))
+            .with_caption(
+                "Uh oh! It looks like two cats escaped their boxes. \
+                They both move in the same direction at your command. \
+                Both cats have to be in their boxes to ship them away.",
+            )
+            .finish(),
+            "Parking Lot" => Self::make_level(
                 7,
                 6,
                 &[
-                    &[T,T,T,F,T,T,T],
-                    &[T,F,T,F,T,T,T],
-                    &[T,T,T,T,T,T,T],
-                    &[T,T,T,F,T,T,T],
-                    &[T,T,T,F,T,F,T],
-                    &[T,T,T,F,T,T,F],
+                    &[T, T, T, F, T, T, T],
+                    &[T, F, T, F, T, T, T],
+                    &[T, T, T, T, T, T, T],
+                    &[T, T, T, F, T, T, T],
+                    &[T, T, T, F, T, F, T],
+                    &[T, T, T, F, T, T, F],
                 ],
-                1
+                1,
             )
-            .add_objects(vec![
-                ((1,3).into(),ObjectInfo::Cat),
-                ((5,3).into(), ObjectInfo::Cat),
-                ((0,5).into(),ObjectInfo::Death),
-                ((1,5).into(),ObjectInfo::Death),
-                ((2,5).into(),ObjectInfo::Death),
-                ((4,0).into(),ObjectInfo::Death),
-                ((5,0).into(),ObjectInfo::Death),
-                ((6,0).into(),ObjectInfo::Death),
-                ((6,0).into(),ObjectInfo::Death),
-                ((1,2).into(), ObjectInfo::Box),
-                ((5,2).into(), ObjectInfo::Box),
-                ((1,0).into(), ObjectInfo::Goal),
-                ((3,2).into(), ObjectInfo::Trap),
-                ((5,5).into(), ObjectInfo::Goal),
-                ((4,4).into(), ObjectInfo::Door(Direction::East, false)),
-                ((0,1).into(), ObjectInfo::Door(Direction::East, false)),
-                ((2,1).into(), ObjectInfo::Door(Direction::East, false)),
-                ((6,4).into(), ObjectInfo::ToggleButton((0,1).into(), 0)),
-                ((2,0).into(), ObjectInfo::ToggleButton((4,4).into(), 0)),
-                ((6,1).into(), ObjectInfo::PushButton((2,1).into(), 0)),
-
-            ]),
-            "Help Me Out!" => Self::make_world(
+            .with_obj((1, 3), ObjectInfo::Cat)
+            .with_obj((5, 3), ObjectInfo::Cat)
+            .with_obj((0, 5), ObjectInfo::Death)
+            .with_obj((1, 5), ObjectInfo::Death)
+            .with_obj((2, 5), ObjectInfo::Death)
+            .with_obj((4, 0), ObjectInfo::Death)
+            .with_obj((5, 0), ObjectInfo::Death)
+            .with_obj((6, 0), ObjectInfo::Death)
+            .with_obj((6, 0), ObjectInfo::Death)
+            .with_obj((1, 2), ObjectInfo::Box)
+            .with_obj((5, 2), ObjectInfo::Box)
+            .with_obj((1, 0), ObjectInfo::Goal)
+            .with_obj((3, 2), ObjectInfo::Trap)
+            .with_obj((5, 5), ObjectInfo::Goal)
+            .with_obj((4, 4), ObjectInfo::Door(Direction::East, false))
+            .with_obj((0, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((2, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((6, 4), ObjectInfo::ToggleButton((0, 1).into(), 0))
+            .with_obj((2, 0), ObjectInfo::ToggleButton((4, 4).into(), 0))
+            .with_obj((6, 1), ObjectInfo::PushButton((2, 1).into(), 0))
+            .finish(),
+            "Help Me Out!" => Self::make_level(
                 7,
                 4,
                 &[
-                    &[T,T,T,T,T,T,T],
-                    &[F,F,T,F,F,F,T],
-                    &[T,T,T,F,T,T,T],
-                    &[T,T,T,F,T,T,T],
+                    &[T, T, T, T, T, T, T],
+                    &[F, F, T, F, F, F, T],
+                    &[T, T, T, F, T, T, T],
+                    &[T, T, T, F, T, T, T],
                 ],
-                1
+                1,
             )
-            .add_objects(vec![
-                ((1,0).into(),ObjectInfo::Door(Direction::North, false)),
-                ((4,0).into(),ObjectInfo::Door(Direction::North, false)),
-                ((1,2).into(),ObjectInfo::Door(Direction::North, false)),
-                ((1,3).into(),ObjectInfo::Door(Direction::North, false)),
-                ((0,0).into(), ObjectInfo::Goal),
-                ((3,0).into(), ObjectInfo::Goal),
-                ((2,3).into(), ObjectInfo::Cat),
-                ((4,3).into(), ObjectInfo::Cat),
-                ((0,2).into(), ObjectInfo::ToggleButton((1,0).into(), 0)),
-                ((0,3).into(), ObjectInfo::ToggleButton((4,0).into(), 0)),
-                ((4,2).into(), ObjectInfo::PushButton((1,3).into(), 0)),
-                ((5,2).into(), ObjectInfo::PushButton((1,2).into(), 0)),
-
-            ]),
-            "Pushing My Boxes" => Self::make_world(
+            .with_obj((1, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((1, 2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((1, 3), ObjectInfo::Door(Direction::North, false))
+            .with_obj((0, 0), ObjectInfo::Goal)
+            .with_obj((3, 0), ObjectInfo::Goal)
+            .with_obj((2, 3), ObjectInfo::Cat)
+            .with_obj((4, 3), ObjectInfo::Cat)
+            .with_obj((0, 2), ObjectInfo::ToggleButton((1, 0).into(), 0))
+            .with_obj((0, 3), ObjectInfo::ToggleButton((4, 0).into(), 0))
+            .with_obj((4, 2), ObjectInfo::PushButton((1, 3).into(), 0))
+            .with_obj((5, 2), ObjectInfo::PushButton((1, 2).into(), 0))
+            .finish(),
+            "Pushing My Boxes" => Self::make_level(
                 8,
                 6,
                 &[
@@ -440,18 +622,18 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0, 1).into(), ObjectInfo::Cat),
-                ((5, 0).into(), ObjectInfo::Cat),
-                ((6, 1).into(), ObjectInfo::Box),
-                ((4, 2).into(), ObjectInfo::Trap),
-                ((2, 1).into(), ObjectInfo::Box),
-                ((0, 5).into(), ObjectInfo::Goal),
-                ((2, 3).into(), ObjectInfo::Goal),
-            ]),
-            "one" => Self::make_world(5, 1, &[&[true, true, true, true, true]], 0)
-                .add_objects(vec![((4, 0).into(), ObjectInfo::Cat)]),
-            "two" => Self::make_world(
+            .with_obj((0, 1), ObjectInfo::Cat)
+            .with_obj((5, 0), ObjectInfo::Cat)
+            .with_obj((6, 1), ObjectInfo::Box)
+            .with_obj((4, 2), ObjectInfo::Trap)
+            .with_obj((2, 1), ObjectInfo::Box)
+            .with_obj((0, 5), ObjectInfo::Goal)
+            .with_obj((2, 3), ObjectInfo::Goal)
+            .finish(),
+            "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], 0)
+                .with_obj((4, 0), ObjectInfo::Cat)
+                .finish(),
+            "two" => Self::make_level(
                 5,
                 5,
                 &[
@@ -463,8 +645,9 @@ impl World {
                 ],
                 0,
             )
-            .add_objects(vec![((2, 0).into(), ObjectInfo::Cat)]),
-            "three" => Self::make_world(
+            .with_obj((2, 0), ObjectInfo::Cat)
+            .finish(),
+            "three" => Self::make_level(
                 11,
                 5,
                 &[
@@ -476,18 +659,17 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0, 1).into(), ObjectInfo::Goal),
-                ((2, 1).into(), ObjectInfo::Cat),
-                ((1, 3).into(), ObjectInfo::Box),
-                ((2, 3).into(), ObjectInfo::Box),
-                ((3, 4).into(), ObjectInfo::Box),
-                //((8, 1).into(), ObjectInfo::Cat),
-                ((9, 2).into(), ObjectInfo::Box),
-                ((9, 4).into(), ObjectInfo::Box),
-                ((8, 4).into(), ObjectInfo::Box),
-            ]),
-            "Easy Box" => Self::make_world(
+            .with_obj((0, 1), ObjectInfo::Goal)
+            .with_obj((2, 1), ObjectInfo::Cat)
+            .with_obj((1, 3), ObjectInfo::Box)
+            .with_obj((2, 3), ObjectInfo::Box)
+            .with_obj((3, 4), ObjectInfo::Box)
+            //((8, 1), ObjectInfo::Cat),
+            .with_obj((9, 2), ObjectInfo::Box)
+            .with_obj((9, 4), ObjectInfo::Box)
+            .with_obj((8, 4), ObjectInfo::Box)
+            .finish(),
+            "Easy Box" => Self::make_level(
                 5,
                 5,
                 &[
@@ -499,14 +681,13 @@ impl World {
                 ],
                 1,
             )
-            .add_objects(vec![
-                ((0, 1).into(), ObjectInfo::Goal),
-                ((2, 1).into(), ObjectInfo::Box),
-                ((4, 4).into(), ObjectInfo::Cat),
-                ((2, 2).into(), ObjectInfo::PushButton((1, 1).into(), 0)),
-                ((1, 1).into(), ObjectInfo::Door(Direction::North, false)),
-            ]),
-            _ => Self::make_world(1, 1, &[&[true]], 0),
+            .with_obj((0, 1), ObjectInfo::Goal)
+            .with_obj((2, 1), ObjectInfo::Box)
+            .with_obj((4, 4), ObjectInfo::Cat)
+            .with_obj((2, 2), ObjectInfo::PushButton((1, 1).into(), 0))
+            .with_obj((1, 1), ObjectInfo::Door(Direction::North, false))
+            .finish(),
+            _ => Self::make_level(1, 1, &[&[true]], 0).finish(),
         }
     }
 }
