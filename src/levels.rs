@@ -18,22 +18,27 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
     },
 ];
 pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
-    &["Movement", "Traps", "Buttons", "Box Bridge"],
+    &[
+        "Movement",
+        "Traps",
+        "Buttons",
+        "Box Bridge",
+        "Conveyor Alley",
+    ],
     &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze"],
-    &["Conveyor Alley"],
     &[
         "Cat Coordination",
         "Help Me Out!",
         "Parking Lot",
         "Pushing My Boxes",
+        "One-way Door",
     ],
     &["one", "two", "three", "Conveyance Test"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
     "Pushing boxes",
-    "Automation Area",
-    "Double cat world",
+    "Two Cat Conundrum",
     "Junk levels (don't play)",
 ];
 
@@ -356,8 +361,8 @@ impl LevelBuilder {
                 6,
                 5,
                 &[
-                    &[T, T, F, F, F, T],
-                    &[T, T, F, F, F, T],
+                    &[T, T, F, F, F, F],
+                    &[T, T, F, F, F, F],
                     &[T, T, F, T, F, T],
                     &[T, T, T, T, T, T],
                     &[T, T, F, F, T, F],
@@ -386,23 +391,72 @@ impl LevelBuilder {
                 (5, 3),
                 ObjectInfo::ToggleableConveyor(Direction::North, true),
             )
-            .with_obj(
-                (5, 2),
-                ObjectInfo::ToggleableConveyor(Direction::North, true),
-            )
-            .with_obj(
-                (5, 1),
-                ObjectInfo::ToggleableConveyor(Direction::North, true),
-            )
             .with_obj((4, 4), ObjectInfo::Death)
             .with_obj((3, 2), ObjectInfo::Death)
-            .with_obj((5, 0), ObjectInfo::Goal)
+            .with_obj((5, 2), ObjectInfo::Goal)
             .with_obj((1, 4), ObjectInfo::PushButton((3, 3).into(), 0))
             .with_obj_anim((1, 0), ObjectInfo::ToggleButton((1, 3).into(), 0), 1)
             .with_obj_anim((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0), 1)
             .with_wiring((1, 3), 0, true)
             .with_wiring((4, 3), 0, true)
             .with_wiring((3, 3), 1, true)
+            .with_caption(
+                "Conveyor belts move things! \
+                Some toggle on and off; \
+                some change directions when activated. \
+                Get back to your box without being thrown into acid!",
+            )
+            .finish(),
+            "One-way Door" => Self::make_level(
+                7,
+                5,
+                &[
+                    &[F, T, F, T, T, T, T],
+                    &[F, T, F, T, T, T, T],
+                    &[T, T, T, T, T, T, T],
+                    &[T, T, F, T, T, T, T],
+                    &[F, T, F, F, F, F, F],
+                ],
+                1,
+            )
+            .with_obj(
+                (2, 2),
+                ObjectInfo::ToggleableConveyor(Direction::West, false),
+            )
+            .with_wiring((2, 2), 1, true)
+            .with_obj(
+                (3, 2),
+                ObjectInfo::ToggleableConveyor(Direction::West, false),
+            )
+            .with_wiring((3, 2), 1, true)
+            .with_obj((5, 1), ObjectInfo::Box)
+            .with_obj(
+                (4, 0),
+                ObjectInfo::ToggleableConveyor(Direction::West, false),
+            )
+            .with_wiring((4, 0), 1, true)
+            .with_obj((6, 2), ObjectInfo::ToggleButton((4, 0).into(), 0))
+            .with_obj((6, 1), ObjectInfo::Goal)
+            .with_obj((5, 0), ObjectInfo::Goal)
+            .with_obj((6, 0), ObjectInfo::Death)
+            .with_obj((5, 2), ObjectInfo::Cat)
+            .with_obj((1, 2), ObjectInfo::Cat)
+            .with_obj((1, 0), ObjectInfo::ToggleButton((3, 2).into(), 0))
+            .with_obj((1, 0), ObjectInfo::ToggleButton((1, 3).into(), 0))
+            .with_obj(
+                (1, 1),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj((1, 4), ObjectInfo::ToggleButton((2, 2).into(), 0))
+            .with_obj(
+                (1, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, false),
+            )
+            .with_wiring((1, 3), 1, true)
+            .with_obj((3, 3), ObjectInfo::Death)
+            .with_obj((4, 3), ObjectInfo::Death)
+            .with_obj((5, 3), ObjectInfo::Death)
+            .with_obj((6, 3), ObjectInfo::Death)
             .finish(),
             "Box Maze" => Self::make_level(
                 8,
