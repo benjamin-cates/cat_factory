@@ -356,6 +356,7 @@ impl LevelBuilder {
             .with_obj((5, 2), ObjectInfo::ToggleButton((4, 0).into(), 0))
             .with_obj((1, 4), ObjectInfo::PushButton((4, 2).into(), 0))
             .with_obj((2, 1), ObjectInfo::Box)
+            .with_hint("Square buttons can be toggled")
             .finish(),
             "Conveyor Alley" => Self::make_level(
                 6,
@@ -406,6 +407,7 @@ impl LevelBuilder {
                 some change directions when activated. \
                 Get back to your box without being thrown into acid!",
             )
+            .with_hint("Determine which buttons go to which conveyors. Stop them from pushing you into acid.")
             .finish(),
             "One-way Door" => Self::make_level(
                 7,
@@ -604,6 +606,7 @@ impl LevelBuilder {
                 They both move in the same direction at your command. \
                 Both cats have to be in their boxes to ship them away.",
             )
+            .with_hint("Trap the top right kitty in his box")
             .finish(),
             "Parking Lot" => Self::make_level(
                 7,
@@ -638,6 +641,7 @@ impl LevelBuilder {
             .with_obj((6, 4), ObjectInfo::ToggleButton((0, 1).into(), 0))
             .with_obj((2, 0), ObjectInfo::ToggleButton((4, 4).into(), 0))
             .with_obj((6, 1), ObjectInfo::PushButton((2, 1).into(), 0))
+            .with_hint("You might have to put the kitties on the trap to stop them from moving")
             .finish(),
             "Help Me Out!" => Self::make_level(
                 7,
@@ -683,6 +687,7 @@ impl LevelBuilder {
             .with_obj((2, 1), ObjectInfo::Box)
             .with_obj((0, 5), ObjectInfo::Goal)
             .with_obj((2, 3), ObjectInfo::Goal)
+            .with_hint("Get the goal to the bottom left corner of the right half")
             .finish(),
             "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], 0)
                 .with_obj((4, 0), ObjectInfo::Cat)

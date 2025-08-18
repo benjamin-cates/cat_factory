@@ -9,8 +9,7 @@ pub enum Menu {
     PuzzlePage(usize, usize),
     World(usize, usize),
 }
-
-pub fn button(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) -> bool {
+pub fn button_held(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) -> bool {
     let play_color = if pointer::screen().intersects_bounds(bounds) {
         color_a
     } else {
@@ -30,7 +29,10 @@ pub fn button(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) ->
         fixed = true,
         color = 0xFFFFFFFF,
     );
-    return pointer::screen().just_pressed() && pointer::screen().intersects_bounds(bounds);
+    return pointer::screen().intersects_bounds(bounds) && pointer::screen().pressed();
+}
+pub fn button(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) -> bool {
+    button_held(text, bounds, color_a, color_b) && pointer::screen().just_pressed()
 }
 
 impl Menu {

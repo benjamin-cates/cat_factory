@@ -5,6 +5,7 @@ use std::{
 
 use crate::{
     levels::WIN_FUNCTIONS,
+    menu::button_held,
     object::{MoveType, Object, ObjectInfo},
     util::{Direction, Point},
 };
@@ -163,6 +164,23 @@ impl World {
         // Draw move count text
         let move_count = format!("Moves: {}", self.move_id);
         text!(move_count.as_str(), x = 35, y = 6, fixed = true);
+        // Hint button
+        let button_bounds = Bounds::with_size(50, 20)
+            .anchor_right(&turbo::screen())
+            .anchor_top(&turbo::screen())
+            .translate_y(5)
+            .translate_x(-5);
+        if self.hint.len() != 0 && button_held("See hint", button_bounds, 0x888888FF, 0x777777FF) {
+            text_box!(
+                self.hint.as_str(),
+                bounds = button_bounds
+                    .left_of_self()
+                    .adjust_width(200)
+                    .translate_x(-205),
+                align = "right",
+                fixed = true,
+            );
+        }
         // Draw caption
         text_box!(
             self.caption.as_str(),
