@@ -257,13 +257,13 @@ impl LevelBuilder {
                 1,
             )
             .with_obj((0, 0), ObjectInfo::Goal)
-            .with_obj((1, 0), ObjectInfo::Death)
-            .with_obj((1, 1), ObjectInfo::Death)
-            .with_obj((3, 1), ObjectInfo::Trap)
-            .with_obj((3, 2), ObjectInfo::Trap)
+            .with_obj((1, 0), ObjectInfo::Trap)
+            .with_obj((1, 1), ObjectInfo::Trap)
+            .with_obj((3, 1), ObjectInfo::Death)
+            .with_obj((3, 2), ObjectInfo::Death)
             .with_obj((4, 2), ObjectInfo::Cat)
             .with_caption(
-                "Avoid the traps! ACID kills cats immediately and the X prevents cats from moving\
+                "ACID kills cats immediately and the MOUSE distract cats (so don't get too close!)\
                 . Press E to undo or press R to reset the level.",
             )
             .finish(),
@@ -683,7 +683,7 @@ impl LevelBuilder {
             .with_obj((0, 1), ObjectInfo::Cat)
             .with_obj((5, 0), ObjectInfo::Cat)
             .with_obj((6, 1), ObjectInfo::Box)
-            .with_obj((4, 2), ObjectInfo::Trap)
+            .with_obj((4, 2), ObjectInfo::Death)
             .with_obj((2, 1), ObjectInfo::Box)
             .with_obj((0, 5), ObjectInfo::Goal)
             .with_obj((2, 3), ObjectInfo::Goal)

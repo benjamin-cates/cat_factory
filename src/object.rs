@@ -93,7 +93,7 @@ impl Object {
                 }
             }
             // TRAPS
-            ObjectInfo::Trap => sprite!("trap", x = x, y = y,),
+            ObjectInfo::Trap => sprite!("trap2", x = x, y = y,),
             ObjectInfo::Death => sprite!("factory/acid", x = x, y = y),
 
             // WALLS
