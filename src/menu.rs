@@ -42,7 +42,7 @@ impl Menu {
                     .translate_x(-150)
                     .translate_y(-100);
                 sprite!(
-                    "logo",
+                    "logo2",
                     x = display_bounds.x(),
                     y = display_bounds.y(),
                     fixed = true
