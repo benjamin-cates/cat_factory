@@ -1,4 +1,4 @@
-use turbo::*;
+use turbo::{time::tick, *};
 
 use crate::{
     util::{Direction, Point},
@@ -94,7 +94,13 @@ impl Object {
             }
             // TRAPS
             ObjectInfo::Trap => sprite!("trap2", x = x, y = y,),
-            ObjectInfo::Death => sprite!("factory/acid", x = x, y = y),
+            ObjectInfo::Death => {
+                if tick() % 30 < 15 {
+                    sprite!("factory/acid", x = x, y = y)
+                } else {
+                    sprite!("factory/acid_1", x = x, y = y)
+                }
+            }
 
             // WALLS
             ObjectInfo::Barrier => {}
