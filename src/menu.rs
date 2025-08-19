@@ -95,19 +95,19 @@ impl Menu {
                     .translate_x(180)
                     .translate_y(4 * 30);
                 let left_bounds = right_bounds.translate_x(-60);
+                let mut out = (Menu::PuzzlePage(1000, 1000), "");
                 if *page_id == PUZZLE_PAGES.len() - 1 {
                     button("Next", right_bounds, 0x444444FF, 0x444444FF);
-                } else {
-                    if button("Next", right_bounds, 0x777777FF, 0x888888FF) {
-                        return (Menu::PuzzlePage(*page_id + 1, 0), "");
-                    }
+                } else if button("Next", right_bounds, 0x777777FF, 0x888888FF) {
+                    out = (Menu::PuzzlePage(*page_id + 1, 0), "");
                 }
                 if *page_id == 0 {
                     button("Prev", left_bounds, 0x444444FF, 0x444444FF);
-                } else {
-                    if button("Prev", left_bounds, 0x777777FF, 0x888888FF) {
-                        return (Menu::PuzzlePage(*page_id - 1, 0), "");
-                    }
+                } else if button("Prev", left_bounds, 0x777777FF, 0x888888FF) {
+                    out = (Menu::PuzzlePage(*page_id - 1, 0), "");
+                }
+                if out != (Menu::PuzzlePage(1000, 1000), "") {
+                    return out;
                 }
                 if turbo::gamepad::get(0).up.just_pressed() {
                     if *selected != 0 {
