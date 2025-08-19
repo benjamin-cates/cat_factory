@@ -110,7 +110,7 @@ impl GameState {
                     }
                 }
             }
-        } else {
+        } else if let Menu::PuzzlePage(_page, _selection) = self.menu {
             let center = World::to_screen_space(
                 (
                     self.menu_world.width as i32 / 2,
@@ -119,10 +119,17 @@ impl GameState {
                     .into(),
             );
             camera::set_xy(center.0 + 95, center.1 - 30);
-            if gamepad::get(0).x.just_pressed() || (tick() % 600 == 0 && random::u8() < 128) {
+            if tick() % 600 == 0 && random::u8() < 128 {
                 self.menu_world = LevelBuilder::get_template(
                     ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
                 );
+            }
+            self.menu_world.won = false;
+            self.menu_world.dead = false;
+            self.menu_world.convey();
+            if (tick() % 20 == 0 || tick() % 90 == 0) && self.menu_world.conveyance == 0 {
+                self.menu_world
+                    .movement(Direction::array_all()[random::between(0, 3) as usize])
             }
             self.menu_world.draw();
         }

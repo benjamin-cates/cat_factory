@@ -171,32 +171,42 @@ impl LevelBuilder {
                 5,
                 &[
                     &[T, T, T, T, T],
-                    &[T, F, F, F, T],
-                    &[T, F, T, T, T],
-                    &[T, F, F, F, F],
+                    &[T, T, T, F, T],
+                    &[T, T, T, F, T],
+                    &[T, T, T, F, F],
                     &[T, T, T, T, T],
                 ],
                 0,
             )
             .with_obj((4, 4), ObjectInfo::Cat)
             .with_obj((0, 4), ObjectInfo::ToggleButton((3, 2).into(), 0))
-            .with_obj((3, 2), ObjectInfo::Door(Direction::North, false))
-            .with_obj((2, 2), ObjectInfo::Goal)
+            .with_obj((4, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((4, 2), ObjectInfo::Goal)
+            .with_obj((2, 2), ObjectInfo::Death)
+            .with_obj((0, 0), ObjectInfo::Trap)
+            .with_obj((2, 3), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((1, 3), ObjectInfo::ToggleableConveyor(Direction::North, true))
+            .with_obj((1, 2), ObjectInfo::ToggleableConveyor(Direction::North, true))
             .finish(),
             "menu2" => Self::make_level(
                 5,
                 5,
                 &[
                     &[T, T, T, T, T],
-                    &[F, F, F, F, T],
+                    &[F, T, T, T, T],
                     &[T, T, T, T, T],
-                    &[T, F, F, F, F],
+                    &[T, F, F, T, F],
                     &[T, T, T, T, T],
                 ],
                 0,
             )
             .with_obj((0, 0), ObjectInfo::Cat)
-            .with_obj((4, 4), ObjectInfo::Goal)
+            .with_obj((3, 4), ObjectInfo::Goal)
+            .with_obj((4, 4), ObjectInfo::Death)
+            .with_obj((1, 1), ObjectInfo::Box)
+            .with_obj((3, 3), ObjectInfo::Box)
+            .with_obj((1, 2), ObjectInfo::RotateableConveyor(Direction::West, Direction::North, false))
+            .with_obj((3, 1), ObjectInfo::PushButton((1,2).into(), 0))
             .finish(),
             "menu3" => Self::make_level(
                 5,
@@ -204,13 +214,17 @@ impl LevelBuilder {
                 &[
                     &[T, F, T, T, T],
                     &[T, F, T, F, T],
-                    &[T, F, T, F, T],
-                    &[T, F, T, F, T],
                     &[T, T, T, F, T],
+                    &[T, T, T, F, T],
+                    &[F, F, T, F, T],
                 ],
                 0,
             )
             .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((2, 4), ObjectInfo::Death)
+            .with_obj((0, 2), ObjectInfo::PushButton((2,1).into(), 0))
+            .with_obj((2, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((1, 2), ObjectInfo::Box)
             .with_obj((4, 4), ObjectInfo::Goal)
             .finish(),
             "menu4" => Self::make_level(
@@ -218,17 +232,22 @@ impl LevelBuilder {
                 5,
                 &[
                     &[T, T, T, T, T],
-                    &[T, F, F, F, T],
-                    &[T, F, F, F, T],
-                    &[T, F, F, F, T],
+                    &[T, F, T, F, T],
+                    &[T, F, T, T, T],
+                    &[T, F, T, F, T],
                     &[T, T, T, F, T],
                 ],
                 0,
             )
-            .with_obj((0, 0), ObjectInfo::Cat)
-            .with_obj((2, 4), ObjectInfo::ToggleButton((4, 3).into(), 0))
+            .with_obj((1, 4), ObjectInfo::Cat)
+            .with_obj((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0))
             .with_obj((4, 3), ObjectInfo::Door(Direction::East, false))
+            .with_obj((2, 2), ObjectInfo::RotateableConveyor(Direction::North,Direction::East, false))
+            .with_obj((2, 3), ObjectInfo::ToggleableConveyor(Direction::North, true))
+            .with_obj((2, 1), ObjectInfo::ToggleableConveyor(Direction::North, true))
             .with_obj((4, 4), ObjectInfo::Goal)
+            .with_obj((3, 2), ObjectInfo::Death)
+            .with_obj((0, 4), ObjectInfo::ToggleButton((2,2).into(),0))
             .finish(),
             "Movement" => Self::make_level(
                 6,

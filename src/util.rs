@@ -139,6 +139,9 @@ impl Direction {
     pub fn iter_all() -> impl Iterator<Item = Direction> {
         [North, South, East, West].into_iter()
     }
+    pub fn array_all() -> [Direction; 4] {
+        [North, South, East, West]
+    }
     pub fn opposite(&self) -> Direction {
         match self {
             North => South,
