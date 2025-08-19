@@ -137,7 +137,11 @@ impl World {
                     .any(|v| v.obj_type == ObjectInfo::Barrier)
                 {
                     let pos = World::to_screen_space((x, y).into());
-                    sprite!("factory/floor3", x = pos.0, y = pos.1);
+                    sprite!(
+                        ["factory/floor3", "factory/floor3_1"][(x + y) as usize % 2],
+                        x = pos.0,
+                        y = pos.1
+                    );
                 }
             }
         }
