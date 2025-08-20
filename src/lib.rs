@@ -1,5 +1,5 @@
 use crate::{
-    levels::{LevelBuilder, PUZZLE_PAGES},
+    levels::{LevelBuilder, PUZZLE_PAGES, WinState},
     menu::{Menu, button},
     util::Direction,
     world::World,
@@ -51,7 +51,7 @@ impl GameState {
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
-            if self.world.won {
+            if self.world.win_state == WinState::Won {
                 rect!(
                     bounds = action_background_bounds.expand(3),
                     color = 0x222222FF,
@@ -73,7 +73,9 @@ impl GameState {
                 self.solved_maps[page_id][puzzle_id] = true;
             }
             // If user died
-            else if self.world.dead {
+            else if self.world.win_state == WinState::Acid
+                || self.world.win_state == WinState::Burnt
+            {
                 rect!(
                     bounds = action_background_bounds.expand(3),
                     color = 0x222222FF,
@@ -124,13 +126,12 @@ impl GameState {
                     ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
                 );
             }
-            self.menu_world.won = false;
-            self.menu_world.dead = false;
             self.menu_world.convey();
             if (tick() % 20 == 0 || tick() % 90 == 0) && self.menu_world.conveyance == 0 {
                 self.menu_world
                     .movement(Direction::array_all()[random::between(0, 3) as usize])
             }
+            self.menu_world.win_state = WinState::Alive;
             self.menu_world.draw();
         }
     }

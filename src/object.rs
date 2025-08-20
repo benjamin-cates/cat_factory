@@ -23,6 +23,10 @@ pub enum ObjectInfo {
     Death,
     ToggleableConveyor(Direction, bool),
     RotateableConveyor(Direction, Direction, bool),
+    BurntBox,
+    Fire,
+    FireOut,
+    Water,
 }
 
 #[turbo::serialize]
@@ -60,6 +64,10 @@ impl Object {
             ObjectInfo::Death => -500,
             ObjectInfo::ToggleableConveyor(..) => -500,
             ObjectInfo::RotateableConveyor(..) => -500,
+            ObjectInfo::Water => 500,
+            ObjectInfo::Fire => -500,
+            ObjectInfo::BurntBox => 500,
+            ObjectInfo::FireOut => -500,
         }
     }
     pub fn draw(&mut self) {
@@ -100,6 +108,23 @@ impl Object {
                 } else {
                     sprite!("factory/acid_1", x = x, y = y)
                 }
+            }
+            ObjectInfo::Fire => {
+                sprite!("factory/fire", x = x + 5, y = y - 25)
+            }
+            ObjectInfo::BurntBox => {
+                sprite!(
+                    "factory/smoke",
+                    x = World::to_screen_space(self.position).0,
+                    y = World::to_screen_space(self.position).1 - anim * 5,
+                    opacity = 1.0 - anim as f32 / 10.0
+                )
+            }
+            ObjectInfo::FireOut => {
+                sprite!("factory/charcoal", x = x, y = y)
+            }
+            ObjectInfo::Water => {
+                sprite!("factory/water_bucket", x = x, y = y - 10)
             }
 
             // WALLS
@@ -210,6 +235,10 @@ impl Object {
             ObjectInfo::Death => MoveType::MoveOver,
             ObjectInfo::Door(_, true) => MoveType::MoveOver,
             ObjectInfo::Door(_, false) => MoveType::NotAllowed,
+            ObjectInfo::Water => MoveType::Push,
+            ObjectInfo::Fire => MoveType::MoveOver,
+            ObjectInfo::BurntBox => MoveType::MoveOver,
+            ObjectInfo::FireOut => MoveType::MoveOver,
         }
     }
     pub fn does_move(&self, world: &World) -> bool {

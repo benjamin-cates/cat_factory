@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    levels::WIN_FUNCTIONS,
+    levels::{WIN_FUNCTIONS, WinState},
     menu::button_held,
     object::{MoveType, Object, ObjectInfo},
     util::{Direction, Point},
@@ -41,18 +41,14 @@ pub struct World {
     pub move_id: usize,
     /// List of (move_id, edit)
     pub edit_history: Vec<(usize, Edit)>,
-    /// Whether the player has died or not
-    pub dead: bool,
-    /// Whether the game has been won
-    pub won: bool,
+    /// Current win state (win, dead, or playing)
+    pub win_state: WinState,
     /// Caption to always display
     pub caption: String,
     /// Hint to only show when the user clicks the button
     pub hint: String,
     /// Conveyor belt timer
     pub conveyance: u32,
-    /// Whether to play sounds or not
-    pub sounds: bool,
 }
 
 impl World {
@@ -62,8 +58,7 @@ impl World {
     }
     /// Undo the previous move
     pub fn undo(&mut self) {
-        self.dead = false;
-        self.won = false;
+        self.win_state = WinState::Alive;
         if self.move_id == 0 {
             return;
         }
@@ -97,7 +92,7 @@ impl World {
     }
     /// Returns true if the world is in a win state
     pub fn check_win(&mut self) {
-        if WIN_FUNCTIONS[self.win_function](&self) && !self.won {
+        if WIN_FUNCTIONS[self.win_function](&self) && self.win_state == WinState::Alive {
             audio::play("win");
             for point in self.cells_iterator() {
                 for i in 0..self[point].len() {
@@ -108,7 +103,7 @@ impl World {
                     }
                 }
             }
-            self.won = true;
+            self.win_state = WinState::Won;
         }
     }
     /// Summons an object at that point
@@ -255,7 +250,7 @@ impl World {
                     movements.push((dir, position, push_proposal));
                 }
             }
-            if play_sound && self.sounds {
+            if play_sound && self.win_state != WinState::ConstructingLevel {
                 audio::play("conveyor")
             }
             for (dir, position, push_proposal) in movements {
@@ -375,12 +370,17 @@ impl World {
             v.obj_type == ObjectInfo::Box
                 || v.obj_type == ObjectInfo::Cat
                 || v.obj_type == ObjectInfo::Goal
+                || v.obj_type == ObjectInfo::Water
         });
-        if self[point].iter().any(|v| v.obj_type == ObjectInfo::Death)
-            && self[point].iter().any(|v| v.obj_type == ObjectInfo::Cat)
-        {
+        let has_acid = self[point].iter().any(|v| v.obj_type == ObjectInfo::Death);
+        let has_fire = self[point].iter().any(|v| v.obj_type == ObjectInfo::Fire);
+        let has_cat = self[point].iter().any(|v| v.obj_type == ObjectInfo::Cat);
+        if has_acid && has_cat {
             audio::play("acid_bubbles");
-            self.dead = true;
+            self.win_state = WinState::Acid;
+        }
+        if has_fire && has_cat {
+            self.win_state = WinState::Burnt;
         }
         for i in 0..self[point].len() {
             match self[point][i].obj_type {
@@ -403,6 +403,29 @@ impl World {
                 | ObjectInfo::ToggleableConveyor(_, true) => {
                     if covered {
                         self.conveyance = 15;
+                    }
+                }
+                ObjectInfo::Box | ObjectInfo::Goal => {
+                    if has_fire {
+                        self.edit_history.push((
+                            self.move_id,
+                            Edit::ChangeObjInfo(point, i, self[point][i].obj_type.clone()),
+                        ));
+                        self[point][i].obj_type = ObjectInfo::BurntBox;
+                        self.set_animation(point, i, 10, 30);
+                    }
+                }
+                ObjectInfo::Water => {
+                    if has_fire {
+                        for k in 0..self[point].len() {
+                            if self[point][k].obj_type == ObjectInfo::Fire {
+                                self[point][k].obj_type = ObjectInfo::FireOut;
+                                self.edit_history.push((
+                                    self.move_id,
+                                    Edit::ChangeObjInfo(point, k, ObjectInfo::Fire),
+                                ));
+                            }
+                        }
                     }
                 }
                 _ => {}
@@ -433,7 +456,7 @@ impl World {
                             move_id,
                             Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
                         ));
-                        if self.sounds {
+                        if self.win_state != WinState::ConstructingLevel {
                             audio::play("door");
                         }
                         self.set_animation(point, i, if old_open { 0 } else { 2 }, 5);
@@ -474,7 +497,7 @@ impl World {
     }
     /// Set the animation to the given value with given duration and log animation in history
     pub fn set_animation(&mut self, point: Point, idx: usize, anim: i32, duration: usize) {
-        let old = self[point][idx].animation.get();
+        let old = self[point][idx].animation.end;
         self.edit_history
             .push((self.move_id, Edit::SetAnimation(point, idx, old)));
         self[point][idx].animation.set_duration(duration);

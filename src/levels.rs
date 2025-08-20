@@ -16,7 +16,26 @@ pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
         }
         true
     },
+    // 2: Fires extinguished
+    |world: &World| {
+        for p in world.cells_iterator() {
+            if world[p].iter().any(|v| v.obj_type == ObjectInfo::Fire) {
+                return false;
+            }
+        }
+        return true;
+    },
 ];
+
+#[turbo::serialize]
+#[derive(Copy, PartialEq)]
+pub enum WinState {
+    Won,
+    Alive,
+    Burnt,
+    Acid,
+    ConstructingLevel,
+}
 pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
     &[
         "Movement",
@@ -33,12 +52,14 @@ pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
         "Pushing My Boxes",
         "One-way Door",
     ],
-    &["one", "two", "three", "Conveyance Test"],
+    &["Playing with Fire"],
+    &["one", "two", "three", "Conveyance Test", "Fire test"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
     "Pushing boxes",
     "Two Cat Conundrum",
+    "Factory Emergency",
     "Junk levels (don't play)",
 ];
 
@@ -69,12 +90,10 @@ impl LevelBuilder {
                 wiring: vec![[false; 4]; width * height],
                 move_id: 0,
                 edit_history: vec![],
-                dead: false,
-                won: false,
+                win_state: WinState::ConstructingLevel,
                 caption: "".to_string(),
                 hint: "".to_string(),
                 conveyance: 0,
-                sounds: false,
             },
         };
         for y in 0..height {
@@ -128,7 +147,7 @@ impl LevelBuilder {
     fn finish(mut self) -> World {
         self.world.edit_history.clear();
         self.world.move_id = 0;
-        self.world.sounds = true;
+        self.world.win_state = WinState::Alive;
         self.world
     }
     /// Adds a caption and returns the self
@@ -707,6 +726,45 @@ impl LevelBuilder {
             .with_obj((0, 5), ObjectInfo::Goal)
             .with_obj((2, 3), ObjectInfo::Goal)
             .with_hint("Get the goal to the bottom left corner of the right half")
+            .finish(),
+            "Playing with Fire" => Self::make_level(7,5,&[
+                &[F,T,T,T,T,T,T],
+                &[F,T,T,T,T,T,T],
+                &[F,T,F,T,T,T,F],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+            ],
+            2
+            )
+            .with_obj((1,1), ObjectInfo::Water)
+            .with_obj((1,2), ObjectInfo::Door(Direction::East, false))
+            .with_obj((0,4), ObjectInfo::Cat)
+            .with_obj((5,2), ObjectInfo::Fire)
+            .with_obj((2,1), ObjectInfo::Fire)
+            .with_obj((5,3), ObjectInfo::Box)
+            .with_obj((6,0), ObjectInfo::PushButton((1,2).into(), 0))
+            .with_caption("FIRE ALERT! Extinguish both fires with the water bucket before it's too late! \
+            Boxes and cats will burn if placed on the fire")
+            .finish(),
+            "Fire test" => Self::make_level(7,7,&[
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,T,T,T,T],
+            ],
+            2)
+            .with_obj((0,0), ObjectInfo::Cat)
+            .with_obj((3,3),ObjectInfo::Fire)
+            .with_obj((2,3),ObjectInfo::Fire)
+            .with_obj((3,2),ObjectInfo::Fire)
+            .with_obj((4,3),ObjectInfo::Fire)
+            .with_obj((3,4),ObjectInfo::Fire)
+            .with_obj((1,1), ObjectInfo::Box)
+            .with_obj((5,5), ObjectInfo::Water)
+            .with_obj((2,2), ObjectInfo::Goal)
             .finish(),
             "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], 0)
                 .with_obj((4, 0), ObjectInfo::Cat)
