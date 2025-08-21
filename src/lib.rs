@@ -51,6 +51,7 @@ impl GameState {
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
+            self.world.check_win();
             if self.world.win_state == WinState::Won {
                 rect!(
                     bounds = action_background_bounds.expand(3),

@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    levels::{WIN_FUNCTIONS, WinState},
+    levels::{WinRequirements, WinState},
     menu::button_held,
     object::{MoveType, Object, ObjectInfo},
     util::{Direction, Point},
@@ -32,9 +32,7 @@ pub struct World {
     /// List of cells in the world, each with a list of objects
     pub inner: Vec<Vec<Object>>,
     /// Which function will be used to score winning
-    /// 0: Winning impossible
-    /// 1: All cats in boxes
-    pub win_function: usize,
+    pub requirements: WinRequirements,
     /// List of wires, each have four inputs
     pub wiring: Vec<[bool; 4]>,
     /// How many moves have been done
@@ -92,7 +90,9 @@ impl World {
     }
     /// Returns true if the world is in a win state
     pub fn check_win(&mut self) {
-        if WIN_FUNCTIONS[self.win_function](&self) && self.win_state == WinState::Alive {
+        let reqs = self.win_requirements();
+        if reqs.iter().all(|v| v.0 == v.1) && self.win_state != WinState::Won {
+            self.win_state = WinState::Won;
             audio::play("win");
             for point in self.cells_iterator() {
                 for i in 0..self[point].len() {
@@ -103,7 +103,11 @@ impl World {
                     }
                 }
             }
-            self.win_state = WinState::Won;
+        }
+        for i in 0..reqs.len() {
+            let text = format!("{}/{} {}", reqs[i].0, reqs[i].1, reqs[i].2);
+            //let done = reqs[i].0 == reqs[i].1;
+            text!(text.as_str(), x = 120 + i * 60, y = 6, fixed = true);
         }
     }
     /// Summons an object at that point
@@ -256,7 +260,6 @@ impl World {
             }
             for (dir, position, push_proposal) in movements {
                 self.try_movement(dir, position, push_proposal);
-                self.check_win();
             }
             self.move_id += 1;
         }
@@ -274,7 +277,6 @@ impl World {
             }
             self.try_movement(dir, position, push_proposal);
         }
-        self.check_win();
         if num_edits_before != self.edit_history.len() {
             self.move_id += 1;
         }
