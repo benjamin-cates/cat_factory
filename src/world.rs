@@ -233,6 +233,7 @@ impl World {
                     if cell.obj_type == ObjectInfo::Cat
                         || cell.obj_type == ObjectInfo::Goal
                         || cell.obj_type == ObjectInfo::Box
+                        || cell.obj_type == ObjectInfo::Water
                     {
                         push_proposal[i] = true;
                         play_sound = true;
@@ -250,7 +251,7 @@ impl World {
                     movements.push((dir, position, push_proposal));
                 }
             }
-            if play_sound && self.win_state != WinState::ConstructingLevel {
+            if movements.len() != 0 && play_sound && self.win_state != WinState::ConstructingLevel {
                 audio::play("conveyor")
             }
             for (dir, position, push_proposal) in movements {
@@ -466,6 +467,7 @@ impl World {
                     let old_on = *on;
                     *on = new_wiring.iter().fold(false, |a, b| a ^ b);
                     if *on != old_on {
+                        self.conveyance = self.conveyance.max(1);
                         self.edit_history.push((
                             move_id,
                             Edit::ChangeObjInfo(
@@ -480,6 +482,7 @@ impl World {
                     let old_on = *on;
                     *on = new_wiring.iter().fold(false, |a, b| a ^ b);
                     if *on != old_on {
+                        self.conveyance = self.conveyance.max(1);
                         self.edit_history.push((
                             move_id,
                             Edit::ChangeObjInfo(

@@ -52,7 +52,7 @@ pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
         "Pushing My Boxes",
         "One-way Door",
     ],
-    &["Playing with Fire"],
+    &["Playing with Fire", "Closet Fire"],
     &["one", "two", "three", "Conveyance Test", "Fire test"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
@@ -743,8 +743,39 @@ impl LevelBuilder {
             .with_obj((2,1), ObjectInfo::Fire)
             .with_obj((5,3), ObjectInfo::Box)
             .with_obj((6,0), ObjectInfo::PushButton((1,2).into(), 0))
-            .with_caption("FIRE ALERT! Extinguish both fires with the water bucket before it's too late! \
+            .with_caption("FIRE ALERT! Extinguish both fires with the water \
+            bucket before it's too late! \
             Boxes and cats will burn if placed on the fire")
+            .finish(),
+            "Closet Fire" => Self::make_level(7,5, &[
+                &[F,T,T,T,T,T,T],
+                &[F,T,T,T,F,F,F],
+                &[T,T,T,T,T,T,T],
+                &[T,F,T,T,T,T,T],
+                &[F,F,T,T,F,F,F],
+            ], 2)
+            .with_obj((1,2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((1,2), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((0,2), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((0,3), ObjectInfo::ToggleableConveyor(Direction::North, true))
+            .with_obj((6,2), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((6,3), ObjectInfo::ToggleableConveyor(Direction::West, false))
+            .with_obj((4,2), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4,3), ObjectInfo::Door(Direction::North, false))
+            .with_obj((5,2), ObjectInfo::Fire)
+            .with_obj((5,3), ObjectInfo::Fire)
+            .with_obj((6,2), ObjectInfo::Fire)
+            .with_obj((6,3), ObjectInfo::Fire)
+            .with_obj((0,2), ObjectInfo::Water)
+            .with_obj((0,3), ObjectInfo::Water)
+            .with_obj((2,0), ObjectInfo::Cat)
+            .with_obj((2,3), ObjectInfo::Box)
+            .with_obj((6,0), ObjectInfo::PushButton((0,2).into(), 0))
+            .with_obj((3,4), ObjectInfo::PushButton((4,2).into(), 0))
+            .with_obj((6,0), ObjectInfo::PushButton((1,2).into(), 0))
+            .with_obj((1,0), ObjectInfo::PushButton((6,3).into(), 0))
+            .with_caption("The closet is on fire!!!!")
+            .with_hint("That top right corner is awfully box shaped")
             .finish(),
             "Fire test" => Self::make_level(7,7,&[
                 &[T,T,T,T,T,T,T],
