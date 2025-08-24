@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    levels::{WinRequirements, WinState},
+    levels::{WinRequirement, WinState},
     menu::button_held,
     object::{MoveType, Object, ObjectInfo},
     util::{Direction, Point},
@@ -32,7 +32,7 @@ pub struct World {
     /// List of cells in the world, each with a list of objects
     pub inner: Vec<Vec<Object>>,
     /// Which function will be used to score winning
-    pub requirements: WinRequirements,
+    pub requirements: Vec<WinRequirement>,
     /// List of wires, each have four inputs
     pub wiring: Vec<[bool; 4]>,
     /// How many moves have been done
@@ -107,7 +107,7 @@ impl World {
         for i in 0..reqs.len() {
             let text = format!("{}/{} {}", reqs[i].0, reqs[i].1, reqs[i].2);
             //let done = reqs[i].0 == reqs[i].1;
-            text!(text.as_str(), x = 120 + i * 60, y = 6, fixed = true);
+            text!(text.as_str(), x = 120 + i * 120, y = 6, fixed = true);
         }
     }
     /// Summons an object at that point

@@ -4,7 +4,7 @@ use crate::world::World;
 
 #[turbo::serialize]
 #[derive(Copy, PartialEq)]
-pub enum WinRequirements {
+pub enum WinRequirement {
     Never,
     CatsInGoals(usize),
     FiresExtinguished(usize),
@@ -12,31 +12,35 @@ pub enum WinRequirements {
 
 impl World {
     pub fn win_requirements(&self) -> Vec<(usize, usize, &'static str)> {
-        match self.requirements {
-            WinRequirements::Never => {
-                vec![(0, 1, "impossible")]
-            }
-            WinRequirements::CatsInGoals(num_cats) => {
-                let mut cats_in_goals = 0;
-                for p in self.cells_iterator() {
-                    if self[p].iter().any(|v| v.obj_type == ObjectInfo::Cat)
-                        && self[p].iter().any(|v| v.obj_type == ObjectInfo::Goal)
-                    {
-                        cats_in_goals += 1;
-                    }
+        let mut reqs = vec![];
+        for req in self.requirements.iter() {
+            match req {
+                WinRequirement::Never => {
+                    reqs.push((0, 1, "impossible"));
                 }
-                vec![(cats_in_goals, num_cats, "Cats in Boxes")]
-            }
-            WinRequirements::FiresExtinguished(total_fires) => {
-                let mut fires_gone = 0;
-                for p in self.cells_iterator() {
-                    if self[p].iter().any(|v| v.obj_type == ObjectInfo::FireOut) {
-                        fires_gone += 1;
+                WinRequirement::CatsInGoals(num_cats) => {
+                    let mut cats_in_goals = 0;
+                    for p in self.cells_iterator() {
+                        if self[p].iter().any(|v| v.obj_type == ObjectInfo::Cat)
+                            && self[p].iter().any(|v| v.obj_type == ObjectInfo::Goal)
+                        {
+                            cats_in_goals += 1;
+                        }
                     }
+                    reqs.push((cats_in_goals, *num_cats, "Cats in Boxes"));
                 }
-                vec![(fires_gone, total_fires, "Fires extinguished")]
+                WinRequirement::FiresExtinguished(total_fires) => {
+                    let mut fires_gone = 0;
+                    for p in self.cells_iterator() {
+                        if self[p].iter().any(|v| v.obj_type == ObjectInfo::FireOut) {
+                            fires_gone += 1;
+                        }
+                    }
+                    reqs.push((fires_gone, *total_fires, "Fires extinguished"));
+                }
             }
         }
+        return reqs;
     }
 }
 
@@ -90,7 +94,7 @@ pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
         "Pushing My Boxes",
         "One-way Door",
     ],
-    &["Playing with Fire", "Closet Fire"],
+    &["Playing with Fire", "Closet Fire", "Extinguish Strategy"],
     &["one", "two", "three", "Conveyance Test", "Fire test"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
@@ -111,7 +115,7 @@ impl LevelBuilder {
         width: usize,
         height: usize,
         floors: &'static [&'static [bool]],
-        win_requirement: WinRequirements,
+        win_requirement: WinRequirement,
     ) -> Self {
         assert_eq!(
             height,
@@ -121,7 +125,7 @@ impl LevelBuilder {
         );
         let mut out = Self {
             world: World {
-                requirements: win_requirement,
+                requirements: vec![win_requirement],
                 width,
                 height,
                 inner: vec![vec![]; width * height],
@@ -218,6 +222,11 @@ impl LevelBuilder {
         self.world.set_wiring(point.into(), idx, active);
         self
     }
+    /// Add additional win requirement
+    fn with_win_req(mut self, win_requirement: WinRequirement) -> Self {
+        self.world.requirements.push(win_requirement);
+        self
+    }
     /// Returns a template world based on the given name
     pub fn get_template(name: &'static str) -> World {
         const T: bool = true;
@@ -233,7 +242,7 @@ impl LevelBuilder {
                     &[T, T, T, F, F],
                     &[T, T, T, T, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((4, 4), ObjectInfo::Cat)
             .with_obj((0, 4), ObjectInfo::ToggleButton((3, 2).into(), 0))
@@ -255,7 +264,7 @@ impl LevelBuilder {
                     &[T, F, F, T, F],
                     &[T, T, T, T, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((0, 0), ObjectInfo::Cat)
             .with_obj((3, 4), ObjectInfo::Goal)
@@ -275,7 +284,7 @@ impl LevelBuilder {
                     &[T, T, T, F, T],
                     &[F, F, T, F, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((0, 0), ObjectInfo::Cat)
             .with_obj((2, 4), ObjectInfo::Death)
@@ -294,7 +303,7 @@ impl LevelBuilder {
                     &[T, F, T, F, T],
                     &[T, T, T, F, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((1, 4), ObjectInfo::Cat)
             .with_obj((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0))
@@ -314,7 +323,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T, T],
                     &[T, T, T, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((0, 1), ObjectInfo::Goal)
             .with_obj((2, 0), ObjectInfo::Box)
@@ -330,7 +339,7 @@ impl LevelBuilder {
                 5,
                 3,
                 &[&[T, T, T, T, T], &[T, T, T, T, T], &[T, T, T, T, T]],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((0, 0), ObjectInfo::Goal)
             .with_obj((1, 0), ObjectInfo::Trap)
@@ -352,7 +361,7 @@ impl LevelBuilder {
                     &[T, F, T, T, T, T, T],
                     &[T, T, T, T, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((0, 0), ObjectInfo::Goal)
             .with_obj((0, 1), ObjectInfo::Door(Direction::East, false))
@@ -376,7 +385,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T],
                     &[T, T, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((0, 4), ObjectInfo::Goal)
             .with_obj((1, 0), ObjectInfo::Death)
@@ -400,7 +409,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T],
                     &[T, T, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((0, 0), ObjectInfo::Goal)
             .with_obj((0, 1), ObjectInfo::Door(Direction::East, false))
@@ -421,7 +430,7 @@ impl LevelBuilder {
                     &[T, T, T, T, F, F],
                     &[T, T, T, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((1, 0), ObjectInfo::Cat)
             .with_obj((3, 0), ObjectInfo::Door(Direction::North, false))
@@ -444,7 +453,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T, T],
                     &[T, T, F, F, T, F],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((1, 1), ObjectInfo::Box)
             .with_obj((0, 2), ObjectInfo::Cat)
@@ -495,7 +504,7 @@ impl LevelBuilder {
                     &[T, T, F, T, T, T, T],
                     &[F, T, F, F, F, F, F],
                 ],
-                WinRequirements::CatsInGoals(2),
+                WinRequirement::CatsInGoals(2),
             )
             .with_obj(
                 (2, 2),
@@ -548,7 +557,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T, T, T, F],
                     &[F, T, T, T, F, F, F, F],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((1, 0), ObjectInfo::Goal)
             .with_obj((1, 1), ObjectInfo::Door(Direction::East, false))
@@ -571,7 +580,7 @@ impl LevelBuilder {
                     &[T, T, T, T, T],
                     &[T, T, T, T, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj(
                 (0, 0),
@@ -665,7 +674,7 @@ impl LevelBuilder {
                     &[T, T, F, T, T, T, F],
                     &[T, T, T, T, F, F, F],
                 ],
-                WinRequirements::CatsInGoals(2),
+                WinRequirement::CatsInGoals(2),
             )
             .with_obj((6, 1), ObjectInfo::Cat)
             .with_obj((5, 0), ObjectInfo::Door(Direction::North, false))
@@ -695,7 +704,7 @@ impl LevelBuilder {
                     &[T, T, T, F, T, F, T],
                     &[T, T, T, F, T, T, F],
                 ],
-                WinRequirements::CatsInGoals(2),
+                WinRequirement::CatsInGoals(2),
             )
             .with_obj((1, 3), ObjectInfo::Cat)
             .with_obj((5, 3), ObjectInfo::Cat)
@@ -728,7 +737,7 @@ impl LevelBuilder {
                     &[T, T, T, F, T, T, T],
                     &[T, T, T, F, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(2),
+                WinRequirement::CatsInGoals(2),
             )
             .with_obj((1, 0), ObjectInfo::Door(Direction::North, false))
             .with_obj((4, 0), ObjectInfo::Door(Direction::North, false))
@@ -754,7 +763,7 @@ impl LevelBuilder {
                     &[T, T, T, T, F, T, T, T],
                     &[T, T, T, T, F, T, T, T],
                 ],
-                WinRequirements::CatsInGoals(2),
+                WinRequirement::CatsInGoals(2),
             )
             .with_obj((0, 1), ObjectInfo::Cat)
             .with_obj((5, 0), ObjectInfo::Cat)
@@ -772,7 +781,7 @@ impl LevelBuilder {
                 &[T,T,T,T,T,T,T],
                 &[T,T,T,T,T,T,T],
             ],
-                WinRequirements::FiresExtinguished(2),
+                WinRequirement::FiresExtinguished(2),
             )
             .with_obj((1,1), ObjectInfo::Water)
             .with_obj((1,2), ObjectInfo::Door(Direction::East, false))
@@ -792,7 +801,7 @@ impl LevelBuilder {
                 &[T,F,T,T,T,T,T],
                 &[F,F,T,T,F,F,F],
             ], 
-                WinRequirements::FiresExtinguished(4),
+                WinRequirement::FiresExtinguished(4),
             )
             .with_obj((1,2), ObjectInfo::Door(Direction::North, false))
             .with_obj((1,2), ObjectInfo::ToggleableConveyor(Direction::East, false))
@@ -817,6 +826,59 @@ impl LevelBuilder {
             .with_caption("The closet is on fire!!!!")
             .with_hint("That top right corner is awfully box shaped")
             .finish(),
+            "Extinguish Strategy" => Self::make_level(
+                8,
+                6,
+                &[
+                    &[T, T, T, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T, T],
+                    &[T, T, T, T, T, T, T, T],
+                ],
+                WinRequirement::FiresExtinguished(4)
+            )
+            .with_win_req(WinRequirement::CatsInGoals(1))
+            .with_obj((6,2), ObjectInfo::Cat)
+            .with_obj((2,3), ObjectInfo::Water)
+            .with_obj((0,2), ObjectInfo::Goal)
+            .with_obj((0,0), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((1,0), ObjectInfo::RotateableConveyor(Direction::West, Direction::South, false))
+            .with_obj((2,0), ObjectInfo::RotateableConveyor(Direction::East, Direction::West, false))
+            .with_obj((3,0), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((0,1), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((1,1), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((2,1), ObjectInfo::ToggleableConveyor(Direction::North, true))
+            .with_obj((3,1), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((1,2), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((2,2), ObjectInfo::ToggleableConveyor(Direction::North, true))
+            .with_obj((3,2), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((0,3), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((1,3), ObjectInfo::RotateableConveyor(Direction::West, Direction::South, false))
+            .with_obj((2,3), ObjectInfo::ToggleableConveyor(Direction::North, false))
+            .with_obj((3,3), ObjectInfo::RotateableConveyor(Direction::West, Direction::South, false))
+            .with_obj((0,4), ObjectInfo::RotateableConveyor(Direction::East, Direction::South, false))
+            .with_obj((1,4), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((2,4), ObjectInfo::ToggleableConveyor(Direction::North, false))
+            .with_obj((3,4), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((0,5), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((1,5), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((2,5), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((3,5), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((0,0), ObjectInfo::Fire)
+            .with_obj((3,0), ObjectInfo::Fire)
+            .with_obj((0,3), ObjectInfo::Fire)
+            .with_obj((1,2), ObjectInfo::Fire)
+            .with_obj((5,0), ObjectInfo::ToggleButton((1,0).into(), 0))
+            .with_obj((6,0), ObjectInfo::ToggleButton((2,0).into(), 0))
+            .with_obj((5,3), ObjectInfo::ToggleButton((1,3).into(), 0))
+            .with_obj((7,3), ObjectInfo::ToggleButton((3,3).into(), 0))
+            .with_obj((4,4), ObjectInfo::ToggleButton((0,4).into(), 0))
+            .with_obj((6,4), ObjectInfo::ToggleButton((2,4).into(), 0))
+            .with_obj((6,3), ObjectInfo::PushButton((2,3).into(), 0))
+            .finish(),
+
             "Fire test" => Self::make_level(7,7,&[
                 &[T,T,T,T,T,T,T],
                 &[T,T,T,T,T,T,T],
@@ -826,7 +888,7 @@ impl LevelBuilder {
                 &[T,T,T,T,T,T,T],
                 &[T,T,T,T,T,T,T],
             ],
-            WinRequirements::Never)
+            WinRequirement::Never)
             .with_obj((0,0), ObjectInfo::Cat)
             .with_obj((3,3),ObjectInfo::Fire)
             .with_obj((2,3),ObjectInfo::Fire)
@@ -837,7 +899,7 @@ impl LevelBuilder {
             .with_obj((5,5), ObjectInfo::Water)
             .with_obj((2,2), ObjectInfo::Goal)
             .finish(),
-            "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], WinRequirements::Never)
+            "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], WinRequirement::Never)
                 .with_obj((4, 0), ObjectInfo::Cat)
                 .finish(),
             "two" => Self::make_level(
@@ -850,7 +912,7 @@ impl LevelBuilder {
                     &[T, T, T, T, F],
                     &[F, F, T, T, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((2, 0), ObjectInfo::Cat)
             .finish(),
@@ -864,7 +926,7 @@ impl LevelBuilder {
                     &[T, T, T, T, F, F, F, T, T, T, T],
                     &[T, T, T, T, T, T, T, T, T, T, T],
                 ],
-                WinRequirements::Never,
+                WinRequirement::Never,
             )
             .with_obj((0, 1), ObjectInfo::Goal)
             .with_obj((2, 1), ObjectInfo::Cat)
@@ -885,7 +947,7 @@ impl LevelBuilder {
                     &[T, T, F, F],
                     &[T, T, F, F],
                 ],
-                WinRequirements::CatsInGoals(1),
+                WinRequirement::CatsInGoals(1),
             )
             .with_obj((1,1), ObjectInfo::Cat)
             .with_obj((1,2), ObjectInfo::Door(Direction::East, false))
@@ -895,7 +957,7 @@ impl LevelBuilder {
             .with_obj((0,2), ObjectInfo::PushButton((1,2).into(), 0))
             .with_obj((3,1), ObjectInfo::Goal)
             .finish(),
-            _ => Self::make_level(1, 1, &[&[true]], WinRequirements::Never).finish(),
+            _ => Self::make_level(1, 1, &[&[true]], WinRequirement::Never).finish(),
         }
     }
 }
