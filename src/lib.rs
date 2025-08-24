@@ -101,14 +101,11 @@ impl GameState {
                 if self.world.conveyance == 0 {
                     if turbo::gamepad::get(0).left.just_pressed() {
                         self.world.movement(Direction::West)
-                    }
-                    if turbo::gamepad::get(0).right.just_pressed() {
+                    } else if turbo::gamepad::get(0).right.just_pressed() {
                         self.world.movement(Direction::East)
-                    }
-                    if turbo::gamepad::get(0).up.just_pressed() {
+                    } else if turbo::gamepad::get(0).up.just_pressed() {
                         self.world.movement(Direction::North)
-                    }
-                    if turbo::gamepad::get(0).down.just_pressed() {
+                    } else if turbo::gamepad::get(0).down.just_pressed() {
                         self.world.movement(Direction::South)
                     }
                 }
