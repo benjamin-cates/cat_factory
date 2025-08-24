@@ -380,9 +380,12 @@ impl World {
         let has_cat = self[point].iter().any(|v| v.obj_type == ObjectInfo::Cat);
         if has_acid && has_cat {
             audio::play("acid_bubbles");
+            audio::play("meow");
             self.win_state = WinState::Acid;
         }
         if has_fire && has_cat {
+            audio::play("meow");
+            audio::play("fire");
             self.win_state = WinState::Burnt;
         }
         for i in 0..self[point].len() {
@@ -415,11 +418,13 @@ impl World {
                             Edit::ChangeObjInfo(point, i, self[point][i].obj_type.clone()),
                         ));
                         self[point][i].obj_type = ObjectInfo::BurntBox;
+                        audio::play("fire");
                         self.set_animation(point, i, 10, 30);
                     }
                 }
                 ObjectInfo::Water => {
                     if has_fire {
+                        audio::play("fire_out");
                         for k in 0..self[point].len() {
                             if self[point][k].obj_type == ObjectInfo::Fire {
                                 self[point][k].obj_type = ObjectInfo::FireOut;
