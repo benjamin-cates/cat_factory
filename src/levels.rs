@@ -877,22 +877,23 @@ impl LevelBuilder {
             .with_obj((8, 4), ObjectInfo::Box)
             .finish(),
             "Easy Box" => Self::make_level(
-                5,
-                5,
+                4,
+                4,
                 &[
-                    &[F, F, T, T, F],
-                    &[T, T, T, T, T],
-                    &[F, T, T, T, T],
-                    &[F, F, F, F, T],
-                    &[F, F, F, F, T],
+                    &[T, T, F, F],
+                    &[T, T, T, T],
+                    &[T, T, F, F],
+                    &[T, T, F, F],
                 ],
                 WinRequirements::CatsInGoals(1),
             )
-            .with_obj((0, 1), ObjectInfo::Goal)
-            .with_obj((2, 1), ObjectInfo::Box)
-            .with_obj((4, 4), ObjectInfo::Cat)
-            .with_obj((2, 2), ObjectInfo::PushButton((1, 1).into(), 0))
-            .with_obj((1, 1), ObjectInfo::Door(Direction::North, false))
+            .with_obj((1,1), ObjectInfo::Cat)
+            .with_obj((1,2), ObjectInfo::Door(Direction::East, false))
+            .with_obj((2,1), ObjectInfo::Door(Direction::North, false))
+            .with_obj((0,1), ObjectInfo::Box)
+            .with_obj((0,0), ObjectInfo::PushButton((2,1).into(), 0))
+            .with_obj((0,2), ObjectInfo::PushButton((1,2).into(), 0))
+            .with_obj((3,1), ObjectInfo::Goal)
             .finish(),
             _ => Self::make_level(1, 1, &[&[true]], WinRequirements::Never).finish(),
         }
