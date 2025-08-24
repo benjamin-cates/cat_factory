@@ -190,6 +190,7 @@ impl LevelBuilder {
         self.world.edit_history.clear();
         self.world.move_id = 0;
         self.world.win_state = WinState::Alive;
+        self.world.conveyance = 0;
         self.world
     }
     /// Adds a caption and returns the self
