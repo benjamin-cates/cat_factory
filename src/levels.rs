@@ -95,14 +95,14 @@ pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
         "One-way Door",
     ],
     &["Playing with Fire", "Closet Fire", "Extinguish Strategy"],
-    &["one", "two", "three", "Conveyance Test", "Fire test"],
+    &["Credits", "Links"],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
     "Pushing boxes",
     "Two Cat Conundrum",
     "Factory Emergency",
-    "Junk levels (don't play)",
+    "Extras",
 ];
 
 pub struct LevelBuilder {

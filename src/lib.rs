@@ -35,7 +35,13 @@ impl GameState {
         let (new_menu, world_name) = self.menu.run(&self.solved_maps);
         self.menu = new_menu;
         if world_name.len() != 0 {
-            self.world = LevelBuilder::get_template(world_name);
+            if world_name == "Credits" {
+                self.menu = Menu::Credits;
+            } else if world_name == "Links" {
+                self.menu = Menu::Links;
+            } else {
+                self.world = LevelBuilder::get_template(world_name);
+            }
         }
         if let Menu::World(page_id, puzzle_id) = self.menu {
             self.world.draw();

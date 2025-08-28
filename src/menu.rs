@@ -8,6 +8,8 @@ use turbo::*;
 pub enum Menu {
     PuzzlePage(usize, usize),
     World(usize, usize),
+    Credits,
+    Links,
 }
 pub fn button_held(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) -> bool {
     let play_color = if pointer::screen().intersects_bounds(bounds) {
@@ -146,6 +148,40 @@ impl Menu {
                 {
                     return (Menu::PuzzlePage(*page_id, *world_id), "");
                 }
+            }
+            Menu::Credits => {
+                if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF)
+                    || turbo::keyboard::get().escape().just_pressed()
+                    || gamepad::get(0).start.just_pressed()
+                {
+                    return (Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), "");
+                }
+                text_box!(
+                    "Credits\n\nBenjamin Cates --> Lead programmer, level designer, artist\
+                    \n\n\nSound effects via FreeSound.org\n\
+                    Thanks to SecureSubset, SilentStrikeZ, Aiyumi, MLaudio, \
+                    SilverIllusionist, jbdelgado, and ThomasMillar\n\n\
+                    Built with Rust and Turbo",
+                    align = "center",
+                    bounds = turbo::new(300, 120).anchor_center(&turbo::screen()),
+                    fixed = true,
+                );
+            }
+            Menu::Links => {
+                if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF)
+                    || turbo::keyboard::get().escape().just_pressed()
+                    || gamepad::get(0).start.just_pressed()
+                {
+                    return (Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), "");
+                }
+                text_box!(
+                    "GitHub: https://github.com/benjamin-cates/cat_factory\n\n\
+                     Find the playtest form and license on the GitHub page\n\n\
+                     Turbo: https://turbo.computer",
+                    align = "center",
+                    bounds = turbo::new(300, 75).anchor_center(&turbo::screen()),
+                    fixed = true,
+                );
             }
         }
         return (*self, "");
