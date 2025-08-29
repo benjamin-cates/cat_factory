@@ -46,9 +46,9 @@ impl GameState {
         if let Menu::World(page_id, puzzle_id) = self.menu {
             self.world.draw();
             let center = World::to_screen_space(
-                (self.world.width as i32 / 2, self.world.height as i32 / 2).into(),
+                (self.world.width as i32 - 1, self.world.height as i32 - 1).into(),
             );
-            camera::set_xy(center.0 + 20, center.1 + 10);
+            camera::set_xy(center.0 / 2 + 20, center.1 / 2 + 10);
             if keyboard::get().key_e().just_pressed() || gamepad::get(0).x.just_pressed() {
                 self.world.undo();
             }
