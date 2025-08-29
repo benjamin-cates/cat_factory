@@ -218,13 +218,7 @@ impl Object {
             ObjectInfo::RotateableConveyor(..) => MoveType::MoveOver,
             ObjectInfo::ToggleableConveyor(..) => MoveType::MoveOver,
             ObjectInfo::Trap => MoveType::MoveOver,
-            ObjectInfo::Box => {
-                if *pusher == ObjectInfo::Goal {
-                    MoveType::NotAllowed
-                } else {
-                    MoveType::Push
-                }
-            }
+            ObjectInfo::Box => MoveType::Push,
             ObjectInfo::Goal => {
                 if *pusher == ObjectInfo::Cat {
                     MoveType::MoveOver

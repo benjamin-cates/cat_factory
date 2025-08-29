@@ -44,31 +44,6 @@ impl World {
     }
 }
 
-pub const WIN_FUNCTIONS: &'static [fn(&World) -> bool] = &[
-    // 0: Never win
-    |_world: &World| false,
-    // 1: Every cat is in a goal
-    |world: &World| {
-        for p in world.cells_iterator() {
-            if world[p].iter().any(|v| v.obj_type == ObjectInfo::Cat)
-                && !world[p].iter().any(|v| v.obj_type == ObjectInfo::Goal)
-            {
-                return false;
-            }
-        }
-        true
-    },
-    // 2: Fires extinguished
-    |world: &World| {
-        for p in world.cells_iterator() {
-            if world[p].iter().any(|v| v.obj_type == ObjectInfo::Fire) {
-                return false;
-            }
-        }
-        return true;
-    },
-];
-
 #[turbo::serialize]
 #[derive(Copy, PartialEq)]
 pub enum WinState {
@@ -86,7 +61,7 @@ pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
         "Box Bridge",
         "Conveyor Alley",
     ],
-    &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze"],
+    &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze", "Conveyor Loop"],
     &[
         "Cat Coordination",
         "Help Me Out!",
@@ -420,6 +395,39 @@ impl LevelBuilder {
             .with_obj((1, 2), ObjectInfo::Box)
             .with_obj((4, 2), ObjectInfo::Cat)
             .with_caption("Boxes can be pushed over acid. Try to get back to your box!!")
+            .finish(),
+            "Conveyor Loop" => Self::make_level(
+                6,
+                5,
+                &[
+                    &[T,T,T,T,T,T],
+                    &[T,T,T,T,T,T],
+                    &[F,F,F,F,F,T],
+                    &[T,T,T,T,T,T],
+                    &[T,T,T,T,T,T],
+                ],
+                WinRequirement::CatsInGoals(1),
+            )
+            .with_obj((1,4), ObjectInfo::PushButton((1,1).into(), 0))
+            .with_obj((3,4), ObjectInfo::PushButton((3,1).into(), 0))
+            .with_obj((5,4), ObjectInfo::ToggleButton((5,1).into(), 0))
+            .with_obj((5,2), ObjectInfo::Death)
+            .with_obj((1,3), ObjectInfo::Box)
+            .with_obj((3,3), ObjectInfo::Box)
+            .with_obj((4,3), ObjectInfo::Box)
+            .with_obj((0,0), ObjectInfo::ToggleableConveyor(Direction::South, true))
+            .with_obj((1,0), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((2,0), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((3,0), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((4,0), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((5,0), ObjectInfo::ToggleableConveyor(Direction::West, true))
+            .with_obj((0,1), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((1,1), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((3,1), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((4,1), ObjectInfo::ToggleableConveyor(Direction::East, true))
+            .with_obj((5,1), ObjectInfo::RotateableConveyor(Direction::North, Direction::South, false))
+            .with_obj((2,1), ObjectInfo::Goal)
+            .with_obj((0,3), ObjectInfo::Cat)
             .finish(),
             "Pushing My Buttons" => Self::make_level(
                 6,
