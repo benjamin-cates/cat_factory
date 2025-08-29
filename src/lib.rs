@@ -53,7 +53,7 @@ impl GameState {
                 self.world.undo();
             }
             if keyboard::get().key_r().just_pressed() || gamepad::get(0).y.just_pressed() {
-                self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
+                self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id].1);
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
@@ -99,7 +99,7 @@ impl GameState {
                     || turbo::keyboard::get().enter().just_pressed()
                     || turbo::gamepad::get(0).a.just_pressed()
                 {
-                    self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id]);
+                    self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id].1);
                 }
                 return;
             } else {

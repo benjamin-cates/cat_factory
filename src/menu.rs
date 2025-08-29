@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use crate::levels::{PAGE_NAMES, PUZZLE_PAGES};
+use crate::levels::{Difficulty, PAGE_NAMES, PUZZLE_PAGES};
 use turbo::*;
 
 #[derive(Copy, PartialEq)]
@@ -88,8 +88,30 @@ impl Menu {
                             (0x777777FF, 0x888888FF)
                         }
                     };
-                    if button(puzzle_names[i], bounds, color_a, color_b) {
-                        return (Menu::World(*page_id, i), PUZZLE_PAGES[*page_id][i]);
+                    let (diff_color, difficulty_char) = match puzzle_names[i].0 {
+                        Difficulty::Easy => (0x3fb84aFF, "Easy"),
+                        Difficulty::Medium => (0xcbb41cFF, "Med"),
+                        Difficulty::Hard => (0xbc4040FF, "Hard"),
+                        Difficulty::Tutorial => (0x00000000, " "),
+                    };
+                    rect!(
+                        bounds = bounds.right_of_self().width(30).translate_x(5),
+                        color = diff_color,
+                        fixed = true,
+                        border_radius = 6,
+                    );
+                    text_box!(
+                        difficulty_char,
+                        bounds = bounds
+                            .right_of_self()
+                            .width(30)
+                            .translate_x(6)
+                            .translate_y(6),
+                        fixed = true,
+                        align = "center"
+                    );
+                    if button(puzzle_names[i].1, bounds, color_a, color_b) {
+                        return (Menu::World(*page_id, i), PUZZLE_PAGES[*page_id][i].1);
                     }
                 }
                 let right_bounds = Bounds::with_size(45, 20)
@@ -137,7 +159,7 @@ impl Menu {
                 {
                     return (
                         Menu::World(*page_id, *selected as usize),
-                        PUZZLE_PAGES[*page_id][*selected],
+                        PUZZLE_PAGES[*page_id][*selected].1,
                     );
                 }
             }

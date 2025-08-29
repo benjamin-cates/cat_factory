@@ -53,24 +53,41 @@ pub enum WinState {
     Acid,
     ConstructingLevel,
 }
-pub const PUZZLE_PAGES: &'static [&'static [&'static str]] = &[
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Difficulty {
+    Tutorial,
+    Easy,
+    Medium,
+    Hard,
+}
+pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
     &[
-        "Movement",
-        "Traps",
-        "Buttons",
-        "Box Bridge",
-        "Conveyor Alley",
+        (Difficulty::Tutorial, "Movement"),
+        (Difficulty::Tutorial, "Traps"),
+        (Difficulty::Tutorial, "Buttons"),
+        (Difficulty::Tutorial, "Box Bridge"),
+        (Difficulty::Tutorial, "Conveyor Alley"),
     ],
-    &["Easy Box", "Pushing My Buttons", "Acid River", "Box Maze", "Conveyor Loop"],
     &[
-        "Cat Coordination",
-        "Help Me Out!",
-        "Parking Lot",
-        "Pushing My Boxes",
-        "One-way Door",
+        (Difficulty::Easy, "Easy Box"),
+        (Difficulty::Easy, "Pushing My Buttons"),
+        (Difficulty::Easy, "Acid River"),
+        (Difficulty::Easy, "Box Maze"),
+        (Difficulty::Medium, "Conveyor Loop"),
     ],
-    &["Playing with Fire", "Closet Fire", "Extinguish Strategy"],
-    &["Credits", "Links"],
+    &[
+        (Difficulty::Easy, "Cat Coordination"),
+        (Difficulty::Medium, "Help Me Out!"),
+        (Difficulty::Medium, "Parking Lot"),
+        (Difficulty::Medium, "Pushing My Boxes"),
+        (Difficulty::Hard, "One-way Door"),
+    ],
+    &[
+        (Difficulty::Easy, "Playing with Fire"),
+        (Difficulty::Medium, "Closet Fire"),
+        (Difficulty::Hard, "Extinguish Strategy"),
+    ],
+    &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
