@@ -115,6 +115,9 @@ impl GameState {
                         self.world.movement(Direction::South)
                     }
                 }
+                if self.world.conveyance == 1 {
+                    self.world.convey();
+                }
             }
         } else if let Menu::PuzzlePage(_page, _selection) = self.menu {
             let center = World::to_screen_space(
@@ -134,6 +137,9 @@ impl GameState {
             if (tick() % 20 == 0 || tick() % 90 == 0) && self.menu_world.conveyance == 0 {
                 self.menu_world
                     .movement(Direction::array_all()[random::between(0, 3) as usize])
+            }
+            if self.menu_world.conveyance == 1 {
+                self.menu_world.convey();
             }
             self.menu_world.win_state = WinState::Alive;
             self.menu_world.draw();

@@ -193,6 +193,16 @@ impl World {
             align = "center",
             fixed = true,
         );
+        if self.conveyance != 0 {
+            sprite!(
+                "loading",
+                scale_x = 2.0,
+                scale_y = 2.0,
+                y = turbo::screen().bottom() - 20,
+                x = 5,
+                fixed = true
+            );
+        }
     }
     pub fn cells_iterator<'a>(&'a self) -> impl Iterator<Item = Point> + use<> {
         let width = self.width;
