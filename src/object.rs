@@ -27,7 +27,7 @@ pub enum ObjectInfo {
     Fire,
     FireOut,
     Water,
-    Portal(Vec<Point>, bool),
+    Portal(Vec<Point>, bool, u32),
 }
 
 #[turbo::serialize]
@@ -215,8 +215,10 @@ impl Object {
             },
 
             //PORTALS
-            ObjectInfo::Portal(_, false) => sprite!("factory/portal_closed", x = x, y = y),
-            ObjectInfo::Portal(_, true) => sprite!("factory/portal_open", x = x, y = y),
+            ObjectInfo::Portal(_, false, _) => sprite!("factory/portal_closed", x = x, y = y),
+            ObjectInfo::Portal(_, true, color) => {
+                sprite!("factory/portal_open", color = color, x = x, y = y)
+            }
         }
     }
     pub fn test_push_by(&self, pusher: &ObjectInfo) -> MoveType {

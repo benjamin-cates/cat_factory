@@ -102,6 +102,11 @@ pub const PAGE_NAMES: &'static [&'static str] = &[
     "Extras",
 ];
 
+const PORTAL_ORANGE: u32 = 0xd07435FF;
+const PORTAL_BLUE: u32 = 0x5199d7FF;
+const PORTAL_PURPLE: u32 = 0x874ed6FF;
+const PORTAL_GREEN: u32 = 0x49d55bFF;
+
 pub struct LevelBuilder {
     world: World,
 }
@@ -998,8 +1003,8 @@ impl LevelBuilder {
 
             ], WinRequirement::CatsInGoals(1))
             .with_obj((0,0), ObjectInfo::PushButton((1,4).into(), 0))
-            .with_obj((0,2), ObjectInfo::Portal(vec![(4,0).into()], true))
-            .with_obj((4,0), ObjectInfo::Portal(vec![(0,2).into()], false))
+            .with_obj((0,2), ObjectInfo::Portal(vec![(4,0).into()], true, PORTAL_BLUE))
+            .with_obj((4,0), ObjectInfo::Portal(vec![(0,2).into()], false, PORTAL_ORANGE))
             .with_obj((4,2), ObjectInfo::ToggleButton((4,0).into(), 0))
             .with_obj((1,4), ObjectInfo::Door(Direction::North, false))
             .with_obj((3,3), ObjectInfo::Box)
@@ -1020,9 +1025,9 @@ impl LevelBuilder {
             .with_obj((1,0), ObjectInfo::Goal)
             .with_obj((1,2), ObjectInfo::Goal)
             .with_obj((2,0), ObjectInfo::Cat)
-            .with_obj((3,1), ObjectInfo::Portal(vec![(5,0).into(), (5,2).into()], true))
-            .with_obj((5,0), ObjectInfo::Portal(vec![(3,1).into()], false))
-            .with_obj((5,2), ObjectInfo::Portal(vec![(3,1).into()], true))
+            .with_obj((3,1), ObjectInfo::Portal(vec![(5,0).into(), (5,2).into()], true, PORTAL_BLUE))
+            .with_obj((5,0), ObjectInfo::Portal(vec![(3,1).into()], false, PORTAL_ORANGE))
+            .with_obj((5,2), ObjectInfo::Portal(vec![(3,1).into()], true, PORTAL_ORANGE))
             .with_obj((0,3), ObjectInfo::ToggleButton((5,0).into(), 0))
             .with_caption("Ummmm how are you going to do this?")
             .finish(),

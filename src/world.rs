@@ -496,7 +496,7 @@ impl World {
                         }
                     }
                 }
-                ObjectInfo::Portal(ends, true) => {
+                ObjectInfo::Portal(ends, true, _) => {
                     let mut j = 0;
                     while j < self[point].len() {
                         let mut do_remove = false;
@@ -510,7 +510,7 @@ impl World {
                             for end in ends.iter() {
                                 if self[*end]
                                     .iter()
-                                    .any(|v| matches!(v.obj_type, ObjectInfo::Portal(_, true)))
+                                    .any(|v| matches!(v.obj_type, ObjectInfo::Portal(_, true, _)))
                                     && self[*end].iter().all(|v| {
                                         v.test_push_by(&self[point][j].obj_type)
                                             == MoveType::MoveOver
@@ -603,14 +603,18 @@ impl World {
                         ));
                     }
                 }
-                ObjectInfo::Portal(ref connections, ref mut on) => {
+                ObjectInfo::Portal(ref connections, ref mut on, color) => {
                     let old_on = *on;
                     *on = new_wiring.iter().fold(false, |a, b| a ^ b);
                     if *on != old_on {
                         let connections = connections.clone();
                         self.edit_history.push((
                             move_id,
-                            Edit::ChangeObjInfo(point, i, ObjectInfo::Portal(connections, old_on)),
+                            Edit::ChangeObjInfo(
+                                point,
+                                i,
+                                ObjectInfo::Portal(connections, old_on, color),
+                            ),
                         ));
                     }
                 }
