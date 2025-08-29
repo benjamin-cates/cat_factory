@@ -90,6 +90,7 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
     &[
         (Difficulty::Easy, "Teleportation"),
         (Difficulty::Easy, "Glitch"),
+        (Difficulty::Medium, "Blocked Portals"),
     ],
     &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
 ];
@@ -1030,6 +1031,24 @@ impl LevelBuilder {
             .with_obj((5,2), ObjectInfo::Portal(vec![(3,1).into()], true, PORTAL_ORANGE))
             .with_obj((0,3), ObjectInfo::ToggleButton((5,0).into(), 0))
             .with_caption("Ummmm how are you going to do this?")
+            .finish(),
+            "Blocked Portals" => Self::make_level(7,5, 
+            &[
+                &[T,T,T,T,T,T,T],
+                &[T,T,F,T,T,T,T],
+                &[T,T,F,F,T,T,T],
+                &[T,T,T,T,T,T,T],
+                &[T,T,T,F,T,T,T],
+            ],
+            WinRequirement::FiresExtinguished(2))
+            .with_obj((0,0), ObjectInfo::Cat)
+            .with_obj((1,1), ObjectInfo::Water)
+            .with_obj((5,3), ObjectInfo::Fire)
+            .with_obj((1,4), ObjectInfo::Fire)
+            .with_obj((5,1), ObjectInfo::Box)
+            .with_obj((3,3), ObjectInfo::Box)
+            .with_obj((5,2), ObjectInfo::Portal(vec![(1,3).into()],true,PORTAL_BLUE))
+            .with_obj((1,3), ObjectInfo::Portal(vec![(5,2).into()],true,PORTAL_ORANGE))
             .finish(),
             _ => Self::make_level(1, 1, &[&[true]], WinRequirement::Never).finish(),
         }
