@@ -77,9 +77,9 @@ impl Menu {
                     }
                     let (color_a, color_b) = if completed[*page_id][i] {
                         if *selected == i {
-                            (0x23B221FF, 0x23B221FF)
+                            (0x3fb84aff, 0x3fb84aff)
                         } else {
-                            (0x23B221FF, 0x29D227FF)
+                            (0x36b248ff, 0x3fb84aff)
                         }
                     } else {
                         if *selected == i {
