@@ -27,6 +27,7 @@ pub enum ObjectInfo {
     Fire,
     FireOut,
     Water,
+    Portal(Vec<Point>, bool),
 }
 
 #[turbo::serialize]
@@ -68,6 +69,7 @@ impl Object {
             ObjectInfo::Fire => -500,
             ObjectInfo::BurntBox => 500,
             ObjectInfo::FireOut => -500,
+            ObjectInfo::Portal(..) => -500,
         }
     }
     pub fn draw(&mut self) {
@@ -211,6 +213,10 @@ impl Object {
                 Direction::East => sprite!("factory/conveyor_right", x = x, y = y),
                 Direction::West => sprite!("factory/conveyor_left", x = x, y = y),
             },
+
+            //PORTALS
+            ObjectInfo::Portal(_, false) => sprite!("factory/portal_closed", x = x, y = y),
+            ObjectInfo::Portal(_, true) => sprite!("factory/portal_open", x = x, y = y),
         }
     }
     pub fn test_push_by(&self, pusher: &ObjectInfo) -> MoveType {
@@ -239,6 +245,7 @@ impl Object {
             ObjectInfo::Fire => MoveType::MoveOver,
             ObjectInfo::BurntBox => MoveType::MoveOver,
             ObjectInfo::FireOut => MoveType::MoveOver,
+            ObjectInfo::Portal(..) => MoveType::MoveOver,
         }
     }
     pub fn does_move(&self, world: &World) -> bool {

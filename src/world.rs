@@ -12,11 +12,16 @@ use crate::{
 use turbo::*;
 
 #[turbo::serialize]
+#[derive(PartialEq)]
 pub enum Edit {
     /// Contains (point, index, old_activity)
     Wiring(Point, usize, bool),
     /// Contains (old_location, old_index, new_location)
     MoveObject(Point, usize, Point),
+    /// Contains (point, usize)
+    SummonObject(Point, usize),
+    /// Contains (point, index, what was removed)
+    DeleteObject(Point, usize, ObjectInfo),
     /// Contains (point, index, old_info)
     ChangeObjInfo(Point, usize, ObjectInfo),
     /// Contains (point, index, old_animation_tween)
@@ -84,6 +89,25 @@ impl World {
                 }
                 Edit::SetAnimation(point, idx, anim) => {
                     self[point][idx].animation.set(anim);
+                }
+                Edit::DeleteObject(point, idx, obj) => {
+                    let pos = World::to_screen_space(point);
+                    self[point].insert(
+                        idx,
+                        Object {
+                            animation: Tween::new(0),
+                            obj_type: obj,
+                            draw_pos: (
+                                Tween::new(pos.0).duration(10),
+                                Tween::new(pos.1).duration(10),
+                            ),
+                            facing: Direction::East,
+                            position: point,
+                        },
+                    );
+                }
+                Edit::SummonObject(point, idx) => {
+                    self[point].remove(idx);
                 }
             }
         }
@@ -281,7 +305,14 @@ impl World {
         for position in self.push_order_points(dir) {
             let mut push_proposal = [false; 8];
             for (i, cell) in self[position].iter().enumerate() {
-                if cell.does_move(self) {
+                if cell.does_move(self)
+                    && self
+                        .edit_history
+                        .iter()
+                        .rev()
+                        .take_while(|v| v.0 == self.move_id)
+                        .all(|v| !matches!(v.1,Edit::MoveObject(p1, _, p2) if p1 == position - dir && p2 == position))
+                {
                     push_proposal[i] = true;
                 }
             }
@@ -347,8 +378,8 @@ impl World {
         for (i, _) in push_proposal.iter().enumerate().rev().filter(|(_, m)| **m) {
             self.move_to(point, i, dir);
         }
-        self.update_cell(point + dir, &old_dst);
-        self.update_cell(point, &old_src);
+        self.update_cell(point + dir, &old_dst, dir);
+        self.update_cell(point, &old_src, dir);
     }
     /// Returns true if a point is inside the Grid
     pub fn point_inside(&self, point: Point) -> bool {
@@ -375,7 +406,7 @@ impl World {
     }
     /// Set new items in a cell
     /// This function checks for button presses
-    pub fn update_cell(&mut self, point: Point, old: &Vec<Object>) {
+    pub fn update_cell(&mut self, point: Point, old: &Vec<Object>, direction: Direction) {
         if self[point] == *old {
             return;
         }
@@ -398,8 +429,9 @@ impl World {
             audio::play("fire");
             self.win_state = WinState::Burnt;
         }
-        for i in 0..self[point].len() {
-            match self[point][i].obj_type {
+        let mut i = 0;
+        while i < self[point].len() {
+            match self[point][i].obj_type.clone() {
                 ObjectInfo::PushButton(wire_dst, wiring_idx) => {
                     if self.set_wiring(wire_dst, wiring_idx, covered) {
                         self.set_animation(point, i, if covered { 1 } else { 0 }, 1);
@@ -464,8 +496,51 @@ impl World {
                         }
                     }
                 }
+                ObjectInfo::Portal(ends, true) => {
+                    let mut j = 0;
+                    while j < self[point].len() {
+                        let mut do_remove = false;
+                        if match self[point][j].obj_type {
+                            ObjectInfo::Box
+                            | ObjectInfo::Cat
+                            | ObjectInfo::Goal
+                            | ObjectInfo::Water => true,
+                            _ => false,
+                        } {
+                            for end in ends.iter() {
+                                if self[*end]
+                                    .iter()
+                                    .any(|v| matches!(v.obj_type, ObjectInfo::Portal(_, true)))
+                                    && self[*end].iter().all(|v| {
+                                        v.test_push_by(&self[point][j].obj_type)
+                                            == MoveType::MoveOver
+                                    })
+                                {
+                                    do_remove = true;
+                                    self.summon_object(*end, self[point][j].obj_type.clone());
+                                    self.edit_history.push((
+                                        self.move_id,
+                                        Edit::SummonObject(*end, self[*end].len() - 1),
+                                    ));
+                                    let mut proposal = [false; 8];
+                                    proposal[self[*end].len() - 1] = true;
+                                    self.try_movement(direction, *end, proposal);
+                                }
+                            }
+                            if do_remove {
+                                let item = self[point].remove(j).obj_type;
+                                self.edit_history
+                                    .push((self.move_id, Edit::DeleteObject(point, j, item)));
+                            }
+                        }
+                        if !do_remove {
+                            j += 1;
+                        }
+                    }
+                }
                 _ => {}
             }
+            i += 1;
         }
     }
     /// Set the activity status of a wire.
@@ -525,6 +600,17 @@ impl World {
                                 i,
                                 ObjectInfo::ToggleableConveyor(dir, old_on),
                             ),
+                        ));
+                    }
+                }
+                ObjectInfo::Portal(ref connections, ref mut on) => {
+                    let old_on = *on;
+                    *on = new_wiring.iter().fold(false, |a, b| a ^ b);
+                    if *on != old_on {
+                        let connections = connections.clone();
+                        self.edit_history.push((
+                            move_id,
+                            Edit::ChangeObjInfo(point, i, ObjectInfo::Portal(connections, old_on)),
                         ));
                     }
                 }

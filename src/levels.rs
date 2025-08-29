@@ -87,6 +87,10 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
         (Difficulty::Medium, "Closet Fire"),
         (Difficulty::Hard, "Extinguish Strategy"),
     ],
+    &[
+        (Difficulty::Easy, "Teleportation"),
+        (Difficulty::Easy, "Glitch"),
+    ],
     &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
@@ -94,6 +98,7 @@ pub const PAGE_NAMES: &'static [&'static str] = &[
     "Pushing boxes",
     "Two Cat Conundrum",
     "Factory Emergency",
+    "Portal 3",
     "Extras",
 ];
 
@@ -982,6 +987,44 @@ impl LevelBuilder {
             .with_obj((0,0), ObjectInfo::PushButton((2,1).into(), 0))
             .with_obj((0,2), ObjectInfo::PushButton((1,2).into(), 0))
             .with_obj((3,1), ObjectInfo::Goal)
+            .finish(),
+            "Teleportation" => Self::make_level(5,5,
+            &[
+                &[T,T,T,T,T],
+                &[F,F,F,F,F],
+                &[T,T,T,T,T],
+                &[F,F,T,T,T],
+                &[T,T,T,T,T],
+
+            ], WinRequirement::CatsInGoals(1))
+            .with_obj((0,0), ObjectInfo::PushButton((1,4).into(), 0))
+            .with_obj((0,2), ObjectInfo::Portal(vec![(4,0).into()], true))
+            .with_obj((4,0), ObjectInfo::Portal(vec![(0,2).into()], false))
+            .with_obj((4,2), ObjectInfo::ToggleButton((4,0).into(), 0))
+            .with_obj((1,4), ObjectInfo::Door(Direction::North, false))
+            .with_obj((3,3), ObjectInfo::Box)
+            .with_obj((4,3), ObjectInfo::Cat)
+            .with_obj((0,4), ObjectInfo::Goal)
+            .with_caption("It seems like a portal has opened in the factory! Take advantage \
+                of this new technology.")
+            .finish(),
+            "Glitch" => Self::make_level(6,4,
+            &[
+                &[T,T,T,T,T,T],
+                &[F,F,F,T,T,T],
+                &[T,T,T,T,T,T],
+                &[T,T,T,T,T,T],
+            ], WinRequirement::CatsInGoals(4))
+            .with_obj((0,0), ObjectInfo::Goal)
+            .with_obj((0,2), ObjectInfo::Goal)
+            .with_obj((1,0), ObjectInfo::Goal)
+            .with_obj((1,2), ObjectInfo::Goal)
+            .with_obj((2,0), ObjectInfo::Cat)
+            .with_obj((3,1), ObjectInfo::Portal(vec![(5,0).into(), (5,2).into()], true))
+            .with_obj((5,0), ObjectInfo::Portal(vec![(3,1).into()], false))
+            .with_obj((5,2), ObjectInfo::Portal(vec![(3,1).into()], true))
+            .with_obj((0,3), ObjectInfo::ToggleButton((5,0).into(), 0))
+            .with_caption("Ummmm how are you going to do this?")
             .finish(),
             _ => Self::make_level(1, 1, &[&[true]], WinRequirement::Never).finish(),
         }
