@@ -411,6 +411,24 @@ impl World {
                         self.conveyance = 15;
                     }
                 }
+                ObjectInfo::Cat => {
+                    if has_acid {
+                        audio::play("acid_bubbles");
+                        audio::play("meow");
+                        self.win_state = WinState::Acid;
+                    }
+                    if has_fire && has_cat {
+                        audio::play("meow");
+                        audio::play("fire");
+                        self.edit_history.push((
+                            self.move_id,
+                            Edit::ChangeObjInfo(point, i, self[point][i].obj_type.clone()),
+                        ));
+                        self[point][i].obj_type = ObjectInfo::BurntBox;
+                        self.set_animation(point, i, 10, 30);
+                        self.win_state = WinState::Burnt;
+                    }
+                }
                 ObjectInfo::Box | ObjectInfo::Goal => {
                     if has_fire {
                         self.edit_history.push((
