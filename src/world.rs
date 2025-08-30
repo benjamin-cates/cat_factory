@@ -427,16 +427,6 @@ impl World {
         let has_acid = self[point].iter().any(|v| v.obj_type == ObjectInfo::Death);
         let has_fire = self[point].iter().any(|v| v.obj_type == ObjectInfo::Fire);
         let has_cat = self[point].iter().any(|v| v.obj_type == ObjectInfo::Cat);
-        if has_acid && has_cat {
-            audio::play("acid_bubbles");
-            audio::play("meow");
-            self.win_state = WinState::Acid;
-        }
-        if has_fire && has_cat {
-            audio::play("meow");
-            audio::play("fire");
-            self.win_state = WinState::Burnt;
-        }
         let mut i = 0;
         while i < self[point].len() {
             match self[point][i].obj_type.clone() {
@@ -462,21 +452,23 @@ impl World {
                     }
                 }
                 ObjectInfo::Cat => {
-                    if has_acid {
+                    if has_acid && self.win_state != WinState::ConstructingLevel {
                         audio::play("acid_bubbles");
                         audio::play("meow");
                         self.win_state = WinState::Acid;
                     }
-                    if has_fire && has_cat {
-                        audio::play("meow");
-                        audio::play("fire");
+                    if has_fire {
+                        if self.win_state != WinState::ConstructingLevel {
+                            audio::play("meow");
+                            audio::play("fire");
+                            self.win_state = WinState::Burnt;
+                        }
                         self.edit_history.push((
                             self.move_id,
                             Edit::ChangeObjInfo(point, i, self[point][i].obj_type.clone()),
                         ));
                         self[point][i].obj_type = ObjectInfo::BurntBox;
                         self.set_animation(point, i, 10, 30);
-                        self.win_state = WinState::Burnt;
                     }
                     for j in 0..self[point].len() {
                         if self[point][j].obj_type == ObjectInfo::Trap {
@@ -510,13 +502,17 @@ impl World {
                             Edit::ChangeObjInfo(point, i, self[point][i].obj_type.clone()),
                         ));
                         self[point][i].obj_type = ObjectInfo::BurntBox;
-                        audio::play("fire");
+                        if self.win_state != WinState::ConstructingLevel {
+                            audio::play("fire");
+                        }
                         self.set_animation(point, i, 10, 30);
                     }
                 }
                 ObjectInfo::Water => {
                     if has_fire {
-                        audio::play("fire_out");
+                        if self.win_state != WinState::ConstructingLevel {
+                            audio::play("fire_out");
+                        }
                         for k in 0..self[point].len() {
                             if self[point][k].obj_type == ObjectInfo::Fire {
                                 self[point][k].obj_type = ObjectInfo::FireOut;

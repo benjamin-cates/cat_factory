@@ -141,7 +141,7 @@ impl GameState {
             if self.menu_world.conveyance == 1 {
                 self.menu_world.convey();
             }
-            self.menu_world.win_state = WinState::Alive;
+            self.menu_world.win_state = WinState::ConstructingLevel;
             self.menu_world.draw();
         }
     }
