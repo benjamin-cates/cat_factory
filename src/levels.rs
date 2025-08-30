@@ -95,7 +95,7 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
         (Difficulty::Easy, "Teleportation"),
         (Difficulty::Easy, "Glitch"),
         (Difficulty::Medium, "Blocked Portals"),
-        (Difficulty::Medium, "T-Intersection"),
+        (Difficulty::Medium, "Kitty Army"),
         (Difficulty::Hard, "Mass Extinguish"),
     ],
     &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
@@ -1056,7 +1056,7 @@ impl LevelBuilder {
             .with_obj((5,2), ObjectInfo::Portal(vec![(1,3).into()],true,PORTAL_BLUE))
             .with_obj((1,3), ObjectInfo::Portal(vec![(5,2).into()],true,PORTAL_ORANGE))
             .finish(),
-            "T-Intersection" => Self::make_level(7,6,
+            "Kitty Army" => Self::make_level(7,6,
                 &[
                     &[T,T,T,T,T,T,T],
                     &[T,T,T,T,T,T,T],
