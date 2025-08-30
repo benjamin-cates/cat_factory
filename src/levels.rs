@@ -8,15 +8,16 @@ pub enum WinRequirement {
     Never,
     CatsInGoals(usize),
     FiresExtinguished(usize),
+    MaxMoves(usize),
 }
 
 impl World {
-    pub fn win_requirements(&self) -> Vec<(usize, usize, &'static str)> {
+    pub fn win_requirements(&self) -> Vec<(bool, String)> {
         let mut reqs = vec![];
         for req in self.requirements.iter() {
             match req {
                 WinRequirement::Never => {
-                    reqs.push((0, 1, "impossible"));
+                    reqs.push((false, "impossible".to_string()));
                 }
                 WinRequirement::CatsInGoals(num_cats) => {
                     let mut cats_in_goals = 0;
@@ -27,7 +28,7 @@ impl World {
                             cats_in_goals += 1;
                         }
                     }
-                    reqs.push((cats_in_goals, *num_cats, "Cats in Boxes"));
+                    reqs.push((cats_in_goals==*num_cats, format!("{}/{} Cats in Boxes", cats_in_goals, *num_cats)));
                 }
                 WinRequirement::FiresExtinguished(total_fires) => {
                     let mut fires_gone = 0;
@@ -36,7 +37,10 @@ impl World {
                             fires_gone += 1;
                         }
                     }
-                    reqs.push((fires_gone, *total_fires, "Fires extinguished"));
+                    reqs.push((fires_gone==*total_fires, format!("{}/{} Fires extinguished", fires_gone, *total_fires)));
+                }
+                WinRequirement::MaxMoves(num_moves) => {
+                    reqs.push((self.move_id < *num_moves, format!("Max {} moves",num_moves)));
                 }
             }
         }
@@ -92,6 +96,7 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
         (Difficulty::Easy, "Glitch"),
         (Difficulty::Medium, "Blocked Portals"),
         (Difficulty::Medium, "T-Intersection"),
+        (Difficulty::Hard, "Mass Extinguish"),
     ],
     &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
 ];
@@ -1088,6 +1093,54 @@ impl LevelBuilder {
             .with_obj((6,5), ObjectInfo::Portal(vec![(5,3).into()], true, PORTAL_GREEN))
             .with_obj((5,3), ObjectInfo::Portal(vec![(6,5).into(),(5,5).into()], true, PORTAL_PURPLE))
             .with_wiring((3,3),1,true)
+            .finish(),
+            "Mass Extinguish" => Self::make_level(
+                7,
+                6,
+                &[
+                    &[T,T,T,T,T,T,T],
+                    &[T,T,T,T,T,T,T],
+                    &[F,F,F,F,F,F,F],
+                    &[T,T,T,T,T,T,T],
+                    &[T,T,T,T,T,T,T],
+                    &[T,T,T,T,T,T,T],
+                ],
+                WinRequirement::FiresExtinguished(9)
+            )
+            .with_win_req(WinRequirement::MaxMoves(60))
+            .with_obj((0,0), ObjectInfo::Portal(vec![(6,3).into()], true, PORTAL_ORANGE))
+            .with_obj((0,1), ObjectInfo::Portal(vec![(6,0).into()], true, PORTAL_GREEN))
+            .with_obj((6,0), ObjectInfo::Portal(vec![(0,1).into()], true, PORTAL_PURPLE))
+            .with_obj((6,3), ObjectInfo::Portal(vec![(0,0).into()], true, PORTAL_BLUE))
+            .with_obj((1,0), ObjectInfo::Death)
+            .with_obj((2,0), ObjectInfo::Fire)
+            .with_obj((3,0), ObjectInfo::Fire)
+            .with_obj((4,0), ObjectInfo::Fire)
+            .with_obj((5,0), ObjectInfo::Fire)
+            .with_obj((1,1), ObjectInfo::Fire)
+            .with_obj((2,1), ObjectInfo::Fire)
+            .with_obj((3,1), ObjectInfo::Fire)
+            .with_obj((4,1), ObjectInfo::Fire)
+            .with_obj((5,1), ObjectInfo::Fire)
+            .with_obj((2,3), ObjectInfo::Portal(vec![(5,4).into()], true, PORTAL_GREEN))
+            .with_obj((2,5), ObjectInfo::Portal(vec![(5,4).into()], true, PORTAL_GREEN))
+            .with_obj((5,4), ObjectInfo::Portal(vec![(2,3).into(),(2,5).into()], true, PORTAL_PURPLE))
+            .with_obj((2,4), ObjectInfo::Cat)
+            .with_obj((4,3), ObjectInfo::Water)
+            .with_obj((3,5), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((4,5), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((2,4), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((3,4), ObjectInfo::ToggleableConveyor(Direction::South, false))
+            .with_obj((4,4), ObjectInfo::ToggleableConveyor(Direction::South, false))
+            .with_obj((5,5), ObjectInfo::ToggleableConveyor(Direction::North, false))
+            .with_obj((0,3), ObjectInfo::PushButton((3,5).into(), 0))
+            .with_obj((0,4), ObjectInfo::PushButton((4,5).into(), 0))
+            .with_obj((0,4), ObjectInfo::PushButton((2,4).into(), 0))
+            .with_obj((0,4), ObjectInfo::PushButton((3,4).into(), 0))
+            .with_obj((0,4), ObjectInfo::PushButton((5,5).into(), 0))
+            .with_obj((0,4), ObjectInfo::PushButton((4,4).into(), 0))
+            .with_caption("Sorry, No dilly-dallying this time.\n\
+                You must finish this level in 60 moves.")
             .finish(),
             _ => Self::make_level(1, 1, &[&[true]], WinRequirement::Never).finish(),
         }

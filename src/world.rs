@@ -115,7 +115,7 @@ impl World {
     /// Returns true if the world is in a win state
     pub fn check_win(&mut self) {
         let reqs = self.win_requirements();
-        if reqs.iter().all(|v| v.0 == v.1) && self.win_state != WinState::Won {
+        if reqs.iter().all(|v| v.0) && self.win_state != WinState::Won {
             self.win_state = WinState::Won;
             audio::play("win");
             for point in self.cells_iterator() {
@@ -129,9 +129,14 @@ impl World {
             }
         }
         for i in 0..reqs.len() {
-            let text = format!("{}/{} {}", reqs[i].0, reqs[i].1, reqs[i].2);
-            //let done = reqs[i].0 == reqs[i].1;
-            text!(text.as_str(), x = 120 + i * 120, y = 6, fixed = true);
+            let color = if reqs[i].0 { 0x3fb84aff } else { 0xFFFFFFFF };
+            text!(
+                reqs[i].1.as_str(),
+                x = 120 + i * 120,
+                y = 6,
+                fixed = true,
+                color = color
+            );
         }
     }
     /// Summons an object at that point
