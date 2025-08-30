@@ -99,7 +99,7 @@ impl Object {
                 } else if anim == 7 || anim == 8 {
                     sprite!("goal5", x = x, y = y - 16)
                 } else {
-                    sprite!("goal6", x = x, y = y - 16 - (anim - 8) * 10)
+                    sprite!("goal6", x = x, y = y - 16 - (anim - 8) * 12)
                 }
             }
             // TRAPS
