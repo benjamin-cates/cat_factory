@@ -118,15 +118,18 @@ impl World {
         if reqs.iter().all(|v| v.0) && self.win_state != WinState::Won {
             self.win_state = WinState::Won;
             audio::play("win");
+            self.move_id -= 1;
             for point in self.cells_iterator() {
                 for i in 0..self[point].len() {
-                    if self[point][i].obj_type == ObjectInfo::Cat
-                        || self[point][i].obj_type == ObjectInfo::Goal
-                    {
+                    if self[point][i].obj_type == ObjectInfo::Goal {
                         self.set_animation(point, i, 30, 30);
+                    }
+                    if self[point][i].obj_type == ObjectInfo::Cat {
+                        self.set_animation(point, i, 10, 10);
                     }
                 }
             }
+            self.move_id += 1;
         }
         for i in 0..reqs.len() {
             let color = if reqs[i].0 { 0x3fb84aff } else { 0xFFFFFFFF };

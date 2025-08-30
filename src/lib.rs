@@ -49,6 +49,7 @@ impl GameState {
                 (self.world.width as i32 - 1, self.world.height as i32 - 1).into(),
             );
             camera::set_xy(center.0 / 2 + 20, center.1 / 2 + 10);
+            self.world.check_win();
             if keyboard::get().key_e().just_pressed() || gamepad::get(0).x.just_pressed() {
                 self.world.undo();
             }
@@ -57,7 +58,6 @@ impl GameState {
             }
             let action_bounds = Bounds::with_size(100, 20).anchor_center(&turbo::screen());
             let action_background_bounds = action_bounds.above_self().adjust_height(20);
-            self.world.check_win();
             if self.world.win_state == WinState::Won {
                 rect!(
                     bounds = action_background_bounds.expand(3),
