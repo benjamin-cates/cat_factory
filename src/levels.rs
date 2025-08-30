@@ -91,6 +91,7 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
         (Difficulty::Easy, "Teleportation"),
         (Difficulty::Easy, "Glitch"),
         (Difficulty::Medium, "Blocked Portals"),
+        (Difficulty::Medium, "T-Intersection"),
     ],
     &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
 ];
@@ -1049,6 +1050,44 @@ impl LevelBuilder {
             .with_obj((3,3), ObjectInfo::Box)
             .with_obj((5,2), ObjectInfo::Portal(vec![(1,3).into()],true,PORTAL_BLUE))
             .with_obj((1,3), ObjectInfo::Portal(vec![(5,2).into()],true,PORTAL_ORANGE))
+            .finish(),
+            "T-Intersection" => Self::make_level(7,6,
+                &[
+                    &[T,T,T,T,T,T,T],
+                    &[T,T,T,T,T,T,T],
+                    &[F,F,F,F,T,T,T],
+                    &[T,T,T,T,F,T,T],
+                    &[F,F,F,F,F,T,T],
+                    &[T,T,T,T,F,T,T],
+                ],
+                WinRequirement::CatsInGoals(2)
+            )
+            .with_win_req(WinRequirement::FiresExtinguished(6))
+            .with_obj((2,3), ObjectInfo::Goal)
+            .with_obj((1,5), ObjectInfo::Goal)
+            .with_obj((3,3), ObjectInfo::Portal(vec![(0,1).into()],false,PORTAL_BLUE))
+            .with_obj((3,5), ObjectInfo::Portal(vec![(0,1).into()],false,PORTAL_BLUE))
+            .with_obj((0,1), ObjectInfo::Portal(vec![(3,3).into(),(3,5).into()],true,PORTAL_ORANGE))
+            .with_obj((5,2), ObjectInfo::Cat)
+            .with_obj((4,2), ObjectInfo::ToggleableConveyor(Direction::North, false))
+            .with_obj((4,1), ObjectInfo::ToggleableConveyor(Direction::North, false))
+            .with_obj((4,0), ObjectInfo::ToggleableConveyor(Direction::East, false))
+            .with_obj((0,0), ObjectInfo::Fire)
+            .with_obj((1,0), ObjectInfo::Fire)
+            .with_obj((2,0), ObjectInfo::Fire)
+            .with_obj((3,0), ObjectInfo::Fire)
+            .with_obj((4,0), ObjectInfo::Fire)
+            .with_obj((5,0), ObjectInfo::Fire)
+            .with_obj((4,2), ObjectInfo::Water)
+            .with_obj((1,3), ObjectInfo::PushButton((3,3).into(), 0))
+            .with_obj((1,3), ObjectInfo::PushButton((3,5).into(), 0))
+            .with_obj((0,5), ObjectInfo::PushButton((4,2).into(), 0))
+            .with_obj((0,5), ObjectInfo::PushButton((4,1).into(), 0))
+            .with_obj((0,5), ObjectInfo::PushButton((4,0).into(), 0))
+            .with_obj((5,5), ObjectInfo::Portal(vec![(5,3).into()], true, PORTAL_GREEN))
+            .with_obj((6,5), ObjectInfo::Portal(vec![(5,3).into()], true, PORTAL_GREEN))
+            .with_obj((5,3), ObjectInfo::Portal(vec![(6,5).into(),(5,5).into()], true, PORTAL_PURPLE))
+            .with_wiring((3,3),1,true)
             .finish(),
             _ => Self::make_level(1, 1, &[&[true]], WinRequirement::Never).finish(),
         }
