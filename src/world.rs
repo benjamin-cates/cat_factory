@@ -478,6 +478,30 @@ impl World {
                         self.set_animation(point, i, 10, 30);
                         self.win_state = WinState::Burnt;
                     }
+                    for j in 0..self[point].len() {
+                        if self[point][j].obj_type == ObjectInfo::Trap {
+                            self.edit_history.push((
+                                self.move_id,
+                                Edit::ChangeObjInfo(point, i, ObjectInfo::Cat),
+                            ));
+                            self[point][i].obj_type = ObjectInfo::CatCrouch;
+                        }
+                    }
+                }
+                ObjectInfo::CatCrouch => {
+                    let mut has_trap = false;
+                    for j in 0..self[point].len() {
+                        if self[point][j].obj_type == ObjectInfo::Trap {
+                            has_trap = true;
+                        }
+                    }
+                    if has_trap == false {
+                        self.edit_history.push((
+                            self.move_id,
+                            Edit::ChangeObjInfo(point, i, ObjectInfo::CatCrouch),
+                        ));
+                        self[point][i].obj_type = ObjectInfo::Cat;
+                    }
                 }
                 ObjectInfo::Box | ObjectInfo::Goal => {
                     if has_fire {

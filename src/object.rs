@@ -9,6 +9,7 @@ use crate::{
 #[derive(PartialEq)]
 pub enum ObjectInfo {
     Cat,
+    CatCrouch,
     Goal,
     Box,
     Barrier,
@@ -52,6 +53,7 @@ impl Object {
         match self.obj_type {
             ObjectInfo::Trap => -500,
             ObjectInfo::Cat => 500,
+            ObjectInfo::CatCrouch => 500,
             ObjectInfo::Goal => 499,
             ObjectInfo::Box => 500,
             ObjectInfo::Barrier => 0,
@@ -87,6 +89,9 @@ impl Object {
                     opacity = (1.0 - anim as f32 / 8.0).max(0.0)
                 );
             }
+            ObjectInfo::CatCrouch => {
+                sprite!("house/cat_crouch", x = x + 5, y = y - 10);
+            }
             ObjectInfo::Goal => {
                 if anim == 0 {
                     sprite!("goal", x = x, y = y - 16)
@@ -103,7 +108,12 @@ impl Object {
                 }
             }
             // TRAPS
-            ObjectInfo::Trap => sprite!("trap2", x = x, y = y,),
+            ObjectInfo::Trap => sprite!(
+                "trap2",
+                x = x + ((tick() as i32 / 12 + y) % 6 - 3).abs(),
+                y = y + (tick() as i32 / 15 + x) % 4 / 2 - 1,
+                flip_x = ((tick() + x as usize) % (75 + x as usize % 10)) < 25
+            ),
             ObjectInfo::Death => {
                 if tick() % 30 < 15 {
                     sprite!("factory/acid", x = x, y = y)
@@ -238,6 +248,7 @@ impl Object {
             ObjectInfo::WallBack(_) | ObjectInfo::WallFront => MoveType::MoveOver,
             ObjectInfo::WallLeft(_) | ObjectInfo::WallRight(_) => MoveType::MoveOver,
             ObjectInfo::Cat => MoveType::Push,
+            ObjectInfo::CatCrouch => MoveType::Push,
             ObjectInfo::PushButton(..) => MoveType::MoveOver,
             ObjectInfo::ToggleButton(..) => MoveType::MoveOver,
             ObjectInfo::Death => MoveType::MoveOver,
@@ -252,12 +263,6 @@ impl Object {
     }
     pub fn does_move(&self, world: &World) -> bool {
         if self.obj_type == ObjectInfo::Cat {
-            if world[self.position]
-                .iter()
-                .any(|v| v.obj_type == ObjectInfo::Trap)
-            {
-                return false;
-            }
             return true;
         }
         false
