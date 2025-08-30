@@ -648,6 +648,9 @@ impl World {
                                 ObjectInfo::Portal(connections, old_on, color),
                             ),
                         ));
+                        if self.win_state != WinState::ConstructingLevel {
+                            audio::play("portal");
+                        }
                     }
                 }
                 _ => {}

@@ -182,7 +182,7 @@ impl Menu {
                     "Credits\n\nBenjamin Cates --> Lead programmer, level designer, artist\
                     \n\n\nSound effects via FreeSound.org\n\
                     Thanks to SecureSubset, SilentStrikeZ, Aiyumi, MLaudio, \
-                    SilverIllusionist, jbdelgado, and ThomasMillar\n\n\
+                    SilverIllusionist, jbdelgado, and ThomasMillar, Ragnar59\n\n\
                     Built with Rust and Turbo",
                     align = "center",
                     bounds = turbo::new(300, 120).anchor_center(&turbo::screen()),
