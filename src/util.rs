@@ -10,9 +10,24 @@ impl Point {
         self.1
     }
 }
+impl FromStr for Point {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(
+            s.split(",").next().ok_or(())?.parse().ok().ok_or(())?,
+            s.split(",")
+                .skip(1)
+                .next()
+                .ok_or(())?
+                .parse()
+                .ok()
+                .ok_or(())?,
+        ))
+    }
+}
 impl Display for Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.write_fmt(format_args!("({}, {})", self.0, self.1))
+        f.write_fmt(format_args!("{},{}", self.0, self.1))
     }
 }
 impl<TR: Into<Point>> std::ops::Add<TR> for Point {
@@ -108,7 +123,17 @@ pub enum Direction {
     West,
 }
 
-use std::fmt::{Display, Formatter};
+impl FromStr for Direction {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.chars().next().ok_or(())?.try_into().map_err(|_| ())
+    }
+}
+
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 
 use Direction::*;
 
@@ -136,6 +161,14 @@ impl From<&Direction> for Point {
 }
 
 impl Direction {
+    pub fn short_code(self) -> &'static str {
+        match self {
+            Self::North => "n",
+            Self::East => "e",
+            Self::West => "w",
+            Self::South => "s",
+        }
+    }
     pub fn iter_all() -> impl Iterator<Item = Direction> {
         [North, South, East, West].into_iter()
     }
@@ -203,6 +236,10 @@ impl TryFrom<char> for Direction {
             '^' => Ok(North),
             '>' => Ok(East),
             '<' => Ok(West),
+            'n' => Ok(North),
+            's' => Ok(South),
+            'e' => Ok(East),
+            'w' => Ok(West),
             _ => Err(()),
         }
     }

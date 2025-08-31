@@ -1,3 +1,5 @@
+use turbo::console::log;
+
 use crate::object::ObjectInfo;
 use crate::util::Direction;
 use crate::world::World;
@@ -98,7 +100,7 @@ pub const PUZZLE_PAGES: &'static [&'static [(Difficulty, &'static str)]] = &[
         (Difficulty::Medium, "Kitty Army"),
         (Difficulty::Hard, "Mass Extinguish"),
     ],
-    &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links")],
+    &[(Difficulty::Tutorial, "Credits"), (Difficulty::Tutorial, "Links"), (Difficulty::Tutorial, "Custom")],
 ];
 pub const PAGE_NAMES: &'static [&'static str] = &[
     "Tutorial",
@@ -115,7 +117,7 @@ pub const PORTAL_PURPLE: u32 = 0x874ed6FF;
 pub const PORTAL_GREEN: u32 = 0x49d55bFF;
 
 pub struct LevelBuilder {
-    world: World,
+    pub world: World,
 }
 
 impl LevelBuilder {
@@ -123,7 +125,7 @@ impl LevelBuilder {
     pub fn make_level(
         width: usize,
         height: usize,
-        floors: &'static [&'static [bool]],
+        floors: &[&[bool]],
         win_requirement: WinRequirement,
     ) -> Self {
         assert_eq!(

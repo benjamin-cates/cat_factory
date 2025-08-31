@@ -11,13 +11,14 @@ use crate::{
 };
 use turbo::*;
 
-#[derive(Copy, PartialEq)]
+#[derive(PartialEq)]
 #[turbo::serialize]
 pub enum Menu {
     PuzzlePage(usize, usize),
     World(usize, usize),
     Credits,
     Links,
+    CustomLevel(String),
 }
 pub fn button_held(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) -> bool {
     let play_color = if pointer::screen().intersects_bounds(bounds) {
@@ -46,7 +47,7 @@ pub fn button(text: &'static str, bounds: Bounds, color_a: u32, color_b: u32) ->
 }
 
 impl Menu {
-    pub fn run(&self, completed: &Vec<Vec<bool>>) -> (Menu, &'static str) {
+    pub fn run(&self, completed: &Vec<Vec<bool>>) -> Option<(Menu, &'static str)> {
         match self {
             Menu::PuzzlePage(page_id, selected) => {
                 let display_bounds = Bounds::with_size(100, 20)
@@ -119,7 +120,7 @@ impl Menu {
                         align = "center"
                     );
                     if button(puzzle_names[i].1, bounds, color_a, color_b) {
-                        return (Menu::World(*page_id, i), PUZZLE_PAGES[*page_id][i].1);
+                        return Some((Menu::World(*page_id, i), PUZZLE_PAGES[*page_id][i].1));
                     }
                 }
                 let right_bounds = Bounds::with_size(45, 20)
@@ -139,44 +140,45 @@ impl Menu {
                     out = (Menu::PuzzlePage(*page_id - 1, 0), "");
                 }
                 if out != (Menu::PuzzlePage(1000, 1000), "") {
-                    return out;
+                    return Some(out);
                 }
                 if turbo::gamepad::get(0).up.just_pressed() {
                     if *selected != 0 {
-                        return (Menu::PuzzlePage(*page_id, (*selected).max(1) - 1), "");
+                        return Some((Menu::PuzzlePage(*page_id, (*selected).max(1) - 1), ""));
                     }
                 }
                 if turbo::gamepad::get(0).down.just_pressed() {
-                    return (
+                    return Some((
                         Menu::PuzzlePage(*page_id, (*selected + 1).min(puzzle_names.len() - 1)),
                         "",
-                    );
+                    ));
                 }
                 if turbo::gamepad::get(0).right.just_pressed() {
-                    return (
+                    return Some((
                         Menu::PuzzlePage((*page_id + 1).min(PUZZLE_PAGES.len() - 1), 0),
                         "",
-                    );
+                    ));
                 }
                 if turbo::gamepad::get(0).left.just_pressed() {
-                    return (Menu::PuzzlePage((*page_id).max(1) - 1, 0), "");
+                    return Some((Menu::PuzzlePage((*page_id).max(1) - 1, 0), ""));
                 }
                 if turbo::gamepad::get(0).a.just_pressed()
                     || turbo::keyboard::get().enter().just_pressed()
                     || turbo::keyboard::get().key_e().just_pressed()
                 {
-                    return (
+                    return Some((
                         Menu::World(*page_id, *selected as usize),
                         PUZZLE_PAGES[*page_id][*selected].1,
-                    );
+                    ));
                 }
             }
             Menu::World(page_id, world_id) => {
                 if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF)
                     || turbo::keyboard::get().escape().just_pressed()
-                    || gamepad::get(0).start.just_pressed()
+                    || (gamepad::get(0).start.just_pressed()
+                        && !keyboard::get().space().just_pressed())
                 {
-                    return (Menu::PuzzlePage(*page_id, *world_id), "");
+                    return Some((Menu::PuzzlePage(*page_id, *world_id), ""));
                 }
             }
             Menu::Credits => {
@@ -184,7 +186,7 @@ impl Menu {
                     || turbo::keyboard::get().escape().just_pressed()
                     || gamepad::get(0).start.just_pressed()
                 {
-                    return (Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), "");
+                    return Some((Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), ""));
                 }
                 text_box!(
                     "Credits\n\nBenjamin Cates --> Lead programmer, level designer, artist\
@@ -202,7 +204,7 @@ impl Menu {
                     || turbo::keyboard::get().escape().just_pressed()
                     || gamepad::get(0).start.just_pressed()
                 {
-                    return (Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), "");
+                    return Some((Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), ""));
                 }
                 text_box!(
                     "GitHub: https://github.com/benjamin-cates/cat_factory\n\n\
@@ -213,8 +215,16 @@ impl Menu {
                     fixed = true,
                 );
             }
+            Menu::CustomLevel(string) => {
+                if button("Exit", Bounds::new(2, 2, 30, 20), 0x777777FF, 0x888888FF)
+                    || turbo::keyboard::get().escape().just_pressed()
+                    || gamepad::get(0).start.just_pressed()
+                {
+                    return Some((Menu::PuzzlePage(PUZZLE_PAGES.len() - 1, 0), ""));
+                }
+            }
         }
-        return (*self, "");
+        return None;
     }
 }
 
