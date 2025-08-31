@@ -1,6 +1,14 @@
 use std::ops::Mul;
 
-use crate::levels::{Difficulty, PAGE_NAMES, PUZZLE_PAGES};
+use crate::{
+    levels::{
+        Difficulty, LevelBuilder, PAGE_NAMES, PORTAL_BLUE, PORTAL_GREEN, PORTAL_ORANGE,
+        PORTAL_PURPLE, PUZZLE_PAGES, WinRequirement,
+    },
+    object::ObjectInfo,
+    util::Direction,
+    world::World,
+};
 use turbo::*;
 
 #[derive(Copy, PartialEq)]
@@ -207,5 +215,242 @@ impl Menu {
             }
         }
         return (*self, "");
+    }
+}
+
+impl LevelBuilder {
+    pub fn get_menu_world(idx: u8) -> World {
+        const T: bool = true;
+        const F: bool = false;
+        match idx % 8 {
+            0 => Self::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[T, T, T, F, T],
+                    &[T, T, T, F, T],
+                    &[T, T, T, F, F],
+                    &[T, T, T, T, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((4, 4), ObjectInfo::Cat)
+            .with_obj((0, 4), ObjectInfo::ToggleButton((3, 2).into(), 0))
+            .with_obj((4, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((4, 2), ObjectInfo::Goal)
+            .with_obj((2, 2), ObjectInfo::Death)
+            .with_obj((0, 0), ObjectInfo::Trap)
+            .with_obj(
+                (2, 3),
+                ObjectInfo::ToggleableConveyor(Direction::West, true),
+            )
+            .with_obj(
+                (1, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj(
+                (1, 2),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .finish(),
+            1 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[F, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[T, F, F, T, F],
+                    &[T, T, T, T, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((3, 4), ObjectInfo::Goal)
+            .with_obj((4, 4), ObjectInfo::Death)
+            .with_obj((1, 1), ObjectInfo::Box)
+            .with_obj((3, 3), ObjectInfo::Box)
+            .with_obj(
+                (1, 2),
+                ObjectInfo::RotateableConveyor(Direction::West, Direction::North, false),
+            )
+            .with_obj((3, 1), ObjectInfo::PushButton((1, 2).into(), 0))
+            .finish(),
+            2 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, F, T, T, T],
+                    &[T, F, T, F, T],
+                    &[T, T, T, F, T],
+                    &[T, T, T, F, T],
+                    &[F, F, T, F, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((0, 0), ObjectInfo::Cat)
+            .with_obj((2, 4), ObjectInfo::Death)
+            .with_obj((0, 2), ObjectInfo::PushButton((2, 1).into(), 0))
+            .with_obj((2, 1), ObjectInfo::Door(Direction::East, false))
+            .with_obj((1, 2), ObjectInfo::Box)
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .finish(),
+            3 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[T, F, T, F, T],
+                    &[T, F, T, T, T],
+                    &[T, F, T, F, T],
+                    &[T, T, T, F, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((1, 4), ObjectInfo::Cat)
+            .with_obj((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0))
+            .with_obj((4, 3), ObjectInfo::Door(Direction::East, false))
+            .with_obj(
+                (2, 2),
+                ObjectInfo::RotateableConveyor(Direction::North, Direction::East, false),
+            )
+            .with_obj(
+                (2, 3),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj(
+                (2, 1),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .with_obj((3, 2), ObjectInfo::Death)
+            .with_obj((0, 4), ObjectInfo::ToggleButton((2, 2).into(), 0))
+            .finish(),
+            4 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[F, F, F, T, T],
+                    &[F, T, T, T, T],
+                    &[F, T, T, T, F],
+                    &[T, T, T, T, F],
+                    &[T, T, F, F, F],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((1, 1), ObjectInfo::Cat)
+            .with_obj((4, 0), ObjectInfo::Fire)
+            .with_obj((3, 1), ObjectInfo::Water)
+            .with_obj(
+                (3, 0),
+                ObjectInfo::ToggleableConveyor(Direction::East, true),
+            )
+            .with_obj(
+                (4, 1),
+                ObjectInfo::ToggleableConveyor(Direction::North, true),
+            )
+            .with_obj((2, 2), ObjectInfo::Goal)
+            .with_obj((0, 4), ObjectInfo::Fire)
+            .with_obj(
+                (0, 3),
+                ObjectInfo::ToggleableConveyor(Direction::South, true),
+            )
+            .with_obj(
+                (1, 4),
+                ObjectInfo::ToggleableConveyor(Direction::West, true),
+            )
+            .finish(),
+            5 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[F, F, F, F, T],
+                    &[T, F, T, F, T],
+                    &[T, F, T, F, T],
+                    &[T, T, T, F, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj(
+                (2, 2),
+                ObjectInfo::Portal(vec![(0, 0).into()], true, PORTAL_BLUE),
+            )
+            .with_obj(
+                (0, 0),
+                ObjectInfo::Portal(vec![(2, 2).into()], true, PORTAL_ORANGE),
+            )
+            .with_obj((0, 2), ObjectInfo::Cat)
+            .with_obj((1, 0), ObjectInfo::PushButton((2, 0).into(), 0))
+            .with_obj((2, 0), ObjectInfo::Door(Direction::North, false))
+            .with_obj((0, 4), ObjectInfo::PushButton((1, 4).into(), 0))
+            .with_obj((1, 4), ObjectInfo::Door(Direction::North, false))
+            .with_obj((4, 4), ObjectInfo::Goal)
+            .finish(),
+            6 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[F, F, F, F, F],
+                    &[T, T, T, T, T],
+                    &[F, F, F, F, F],
+                    &[T, T, T, T, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((0, 2), ObjectInfo::Cat)
+            .with_obj((1, 2), ObjectInfo::Water)
+            .with_obj((3, 2), ObjectInfo::Fire)
+            .with_obj(
+                (4, 2),
+                ObjectInfo::Portal(vec![(0, 0).into()], true, PORTAL_BLUE),
+            )
+            .with_obj(
+                (0, 0),
+                ObjectInfo::Portal(vec![(4, 2).into()], true, PORTAL_ORANGE),
+            )
+            .with_obj((2, 0), ObjectInfo::Fire)
+            .with_obj(
+                (0, 4),
+                ObjectInfo::Portal(vec![(4, 0).into()], true, PORTAL_GREEN),
+            )
+            .with_obj(
+                (4, 0),
+                ObjectInfo::Portal(vec![(0, 4).into()], true, PORTAL_PURPLE),
+            )
+            .with_obj((1, 4), ObjectInfo::Fire)
+            .with_obj((2, 4), ObjectInfo::Fire)
+            .with_obj((3, 4), ObjectInfo::Fire)
+            .with_obj((4, 4), ObjectInfo::Fire)
+            .finish(),
+            7 => LevelBuilder::make_level(
+                5,
+                5,
+                &[
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                    &[F, F, F, F, F],
+                    &[T, T, T, T, T],
+                    &[T, T, T, T, T],
+                ],
+                WinRequirement::Never,
+            )
+            .with_obj((2, 1), ObjectInfo::Cat)
+            .with_obj((2, 3), ObjectInfo::Cat)
+            .with_obj((4, 0), ObjectInfo::Goal)
+            .with_obj((0, 3), ObjectInfo::Goal)
+            .with_obj(
+                (1, 3),
+                ObjectInfo::ToggleableConveyor(Direction::East, true),
+            )
+            .with_obj(
+                (1, 4),
+                ObjectInfo::ToggleableConveyor(Direction::West, true),
+            )
+            .finish(),
+            _ => Self::make_level(1, 1, &[&[T]], WinRequirement::Never).finish(),
+        }
     }
 }

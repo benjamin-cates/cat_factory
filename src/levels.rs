@@ -109,10 +109,10 @@ pub const PAGE_NAMES: &'static [&'static str] = &[
     "Extras",
 ];
 
-const PORTAL_ORANGE: u32 = 0xd07435FF;
-const PORTAL_BLUE: u32 = 0x5199d7FF;
-const PORTAL_PURPLE: u32 = 0x874ed6FF;
-const PORTAL_GREEN: u32 = 0x49d55bFF;
+pub const PORTAL_ORANGE: u32 = 0xd07435FF;
+pub const PORTAL_BLUE: u32 = 0x5199d7FF;
+pub const PORTAL_PURPLE: u32 = 0x874ed6FF;
+pub const PORTAL_GREEN: u32 = 0x49d55bFF;
 
 pub struct LevelBuilder {
     world: World,
@@ -120,7 +120,7 @@ pub struct LevelBuilder {
 
 impl LevelBuilder {
     /// Make a new world using the floors as a 2d bool array of where the floors will be.
-    fn make_level(
+    pub fn make_level(
         width: usize,
         height: usize,
         floors: &'static [&'static [bool]],
@@ -195,7 +195,7 @@ impl LevelBuilder {
         }
         out
     }
-    fn finish(mut self) -> World {
+    pub fn finish(mut self) -> World {
         self.world.edit_history.clear();
         self.world.move_id = 0;
         self.world.win_state = WinState::Alive;
@@ -203,22 +203,22 @@ impl LevelBuilder {
         self.world
     }
     /// Adds a caption and returns the self
-    fn with_caption(mut self, str: &'static str) -> Self {
+    pub fn with_caption(mut self, str: &'static str) -> Self {
         self.world.caption = String::from(str);
         self
     }
     /// Adds a hint and returns the self
-    fn with_hint(mut self, str: &'static str) -> Self {
+    pub fn with_hint(mut self, str: &'static str) -> Self {
         self.world.hint = String::from(str);
         self
     }
     /// Add an object to the world
-    fn with_obj(mut self, point: (i32, i32), obj: ObjectInfo) -> Self {
+    pub fn with_obj(mut self, point: (i32, i32), obj: ObjectInfo) -> Self {
         self.world.summon_object(point.into(), obj);
         self
     }
     /// Add an object to the world with a starting animation
-    fn with_obj_anim(mut self, point: (i32, i32), obj: ObjectInfo, anim: i32) -> Self {
+    pub fn with_obj_anim(mut self, point: (i32, i32), obj: ObjectInfo, anim: i32) -> Self {
         self.world.summon_object(point.into(), obj);
         self.world[point.into()]
             .last_mut()
@@ -228,12 +228,12 @@ impl LevelBuilder {
         self
     }
     /// Set wiring in certain location
-    fn with_wiring(mut self, point: (i32, i32), idx: usize, active: bool) -> Self {
+    pub fn with_wiring(mut self, point: (i32, i32), idx: usize, active: bool) -> Self {
         self.world.set_wiring(point.into(), idx, active);
         self
     }
     /// Add additional win requirement
-    fn with_win_req(mut self, win_requirement: WinRequirement) -> Self {
+    pub fn with_win_req(mut self, win_requirement: WinRequirement) -> Self {
         self.world.requirements.push(win_requirement);
         self
     }
@@ -242,89 +242,6 @@ impl LevelBuilder {
         const T: bool = true;
         const F: bool = false;
         match name {
-            "menu1" => Self::make_level(
-                5,
-                5,
-                &[
-                    &[T, T, T, T, T],
-                    &[T, T, T, F, T],
-                    &[T, T, T, F, T],
-                    &[T, T, T, F, F],
-                    &[T, T, T, T, T],
-                ],
-                WinRequirement::Never,
-            )
-            .with_obj((4, 4), ObjectInfo::Cat)
-            .with_obj((0, 4), ObjectInfo::ToggleButton((3, 2).into(), 0))
-            .with_obj((4, 1), ObjectInfo::Door(Direction::East, false))
-            .with_obj((4, 2), ObjectInfo::Goal)
-            .with_obj((2, 2), ObjectInfo::Death)
-            .with_obj((0, 0), ObjectInfo::Trap)
-            .with_obj((2, 3), ObjectInfo::ToggleableConveyor(Direction::West, true))
-            .with_obj((1, 3), ObjectInfo::ToggleableConveyor(Direction::North, true))
-            .with_obj((1, 2), ObjectInfo::ToggleableConveyor(Direction::North, true))
-            .finish(),
-            "menu2" => Self::make_level(
-                5,
-                5,
-                &[
-                    &[T, T, T, T, T],
-                    &[F, T, T, T, T],
-                    &[T, T, T, T, T],
-                    &[T, F, F, T, F],
-                    &[T, T, T, T, T],
-                ],
-                WinRequirement::Never,
-            )
-            .with_obj((0, 0), ObjectInfo::Cat)
-            .with_obj((3, 4), ObjectInfo::Goal)
-            .with_obj((4, 4), ObjectInfo::Death)
-            .with_obj((1, 1), ObjectInfo::Box)
-            .with_obj((3, 3), ObjectInfo::Box)
-            .with_obj((1, 2), ObjectInfo::RotateableConveyor(Direction::West, Direction::North, false))
-            .with_obj((3, 1), ObjectInfo::PushButton((1,2).into(), 0))
-            .finish(),
-            "menu3" => Self::make_level(
-                5,
-                5,
-                &[
-                    &[T, F, T, T, T],
-                    &[T, F, T, F, T],
-                    &[T, T, T, F, T],
-                    &[T, T, T, F, T],
-                    &[F, F, T, F, T],
-                ],
-                WinRequirement::Never,
-            )
-            .with_obj((0, 0), ObjectInfo::Cat)
-            .with_obj((2, 4), ObjectInfo::Death)
-            .with_obj((0, 2), ObjectInfo::PushButton((2,1).into(), 0))
-            .with_obj((2, 1), ObjectInfo::Door(Direction::East, false))
-            .with_obj((1, 2), ObjectInfo::Box)
-            .with_obj((4, 4), ObjectInfo::Goal)
-            .finish(),
-            "menu4" => Self::make_level(
-                5,
-                5,
-                &[
-                    &[T, T, T, T, T],
-                    &[T, F, T, F, T],
-                    &[T, F, T, T, T],
-                    &[T, F, T, F, T],
-                    &[T, T, T, F, T],
-                ],
-                WinRequirement::Never,
-            )
-            .with_obj((1, 4), ObjectInfo::Cat)
-            .with_obj((0, 0), ObjectInfo::ToggleButton((4, 3).into(), 0))
-            .with_obj((4, 3), ObjectInfo::Door(Direction::East, false))
-            .with_obj((2, 2), ObjectInfo::RotateableConveyor(Direction::North,Direction::East, false))
-            .with_obj((2, 3), ObjectInfo::ToggleableConveyor(Direction::North, true))
-            .with_obj((2, 1), ObjectInfo::ToggleableConveyor(Direction::North, true))
-            .with_obj((4, 4), ObjectInfo::Goal)
-            .with_obj((3, 2), ObjectInfo::Death)
-            .with_obj((0, 4), ObjectInfo::ToggleButton((2,2).into(),0))
-            .finish(),
             "Movement" => Self::make_level(
                 6,
                 3,

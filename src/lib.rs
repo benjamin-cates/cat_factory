@@ -26,9 +26,7 @@ impl GameState {
             solved_maps: vec![vec![false; 8]; 10],
             world: LevelBuilder::get_template("double_cat"),
             menu: Menu::PuzzlePage(0, 0),
-            menu_world: LevelBuilder::get_template(
-                ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
-            ),
+            menu_world: LevelBuilder::get_menu_world(random::u8()),
         }
     }
     fn update(&mut self) {
@@ -128,10 +126,10 @@ impl GameState {
                     .into(),
             );
             camera::set_xy(center.0 + 95, center.1 - 30);
-            if tick() % 600 == 0 && random::u8() < 128 {
-                self.menu_world = LevelBuilder::get_template(
-                    ["menu1", "menu2", "menu3", "menu4"][(random::u8() % 4) as usize],
-                );
+            if (tick() % 600 == 0 && random::u8() < 128)
+                || turbo::keyboard::get().key_r().just_pressed()
+            {
+                self.menu_world = LevelBuilder::get_menu_world(random::u8());
             }
             self.menu_world.convey();
             if (tick() % 20 == 0 || tick() % 90 == 0) && self.menu_world.conveyance == 0 {
