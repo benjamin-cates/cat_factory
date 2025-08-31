@@ -1,5 +1,3 @@
-use turbo::console::log;
-
 use crate::object::ObjectInfo;
 use crate::util::Direction;
 use crate::world::World;
