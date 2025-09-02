@@ -161,6 +161,55 @@ impl World {
     /// Draw the whole world
     pub fn draw(&mut self) {
         // Draw floors
+        for y in -1i32..=self.height as i32 {
+            for x in -1i32..=self.width as i32 {
+                let has_floor_in_dir = |dir: Direction| {
+                    let pos: Point = (x, y).into();
+                    if !self.point_inside(pos) && self.point_inside(pos - dir) {
+                        return true;
+                    }
+                    if !self.point_inside(pos + dir) {
+                        return false;
+                    }
+                    return !self[pos + dir]
+                        .iter()
+                        .any(|v| v.obj_type == ObjectInfo::Barrier);
+                };
+                let pos = World::to_screen_space((x, y).into());
+                //sprite!(
+                //    "factory/pipes_1",
+                //    x = pos.0,
+                //    y = pos.1,
+                //    frame = (x + y + 2) as usize % 2
+                //);
+                //for (dir, idx) in [
+                //    (Direction::North, 3),
+                //    (Direction::South, 2),
+                //    (Direction::East, 1),
+                //    (Direction::West, 0),
+                //] {
+                //    if has_floor_in_dir(dir) {
+                //        sprite!("factory/shadow", x = pos.0, y = pos.1, frame = idx);
+                //    }
+                //}
+            }
+        }
+        // SHADOW 3
+        //for y in -2..(self.height as i32 + 2) {
+        //    for x in -2..(self.width as i32 + 2) {
+        //        let pos: Point = (x, y).into();
+        //        if (self.point_inside(pos)
+        //            && !self[pos].iter().any(|v| v.obj_type == ObjectInfo::Barrier))
+        //            || (x == -2
+        //                || y == -2
+        //                || x == self.width as i32 + 1
+        //                || y == self.height as i32 + 1)
+        //        {
+        //            let pos = World::to_screen_space((x, y).into());
+        //            sprite!("factory/shadow_3", x = pos.0 - 10, y = pos.1 - 10);
+        //        }
+        //    }
+        //}
         for y in 0..self.height {
             for x in (0..self.width).rev() {
                 if !self[(x, y).into()]
@@ -169,7 +218,8 @@ impl World {
                 {
                     let pos = World::to_screen_space((x, y).into());
                     sprite!(
-                        ["factory/floor3", "factory/floor3_1"][(x + y) as usize % 2],
+                        "factory/floor",
+                        frame = (x + y) as usize % 2,
                         x = pos.0,
                         y = pos.1
                     );

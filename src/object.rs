@@ -148,10 +148,10 @@ impl Object {
             // WALLS
             ObjectInfo::Barrier => {}
             ObjectInfo::WallBack(true) => sprite!("factory/front_wall", x = x, y = y - 3),
-            ObjectInfo::WallBack(false) => sprite!("factory/back_wall2", x = x, y = (y - 32)),
+            ObjectInfo::WallBack(false) => sprite!("factory/back_wall2", x = x - 2, y = (y - 32)),
             ObjectInfo::WallFront => sprite!("factory/front_wall", x = x + 14, y = y + 25),
             ObjectInfo::WallLeft(true) => sprite!("factory/left_wall", x = x, y = y - 32),
-            ObjectInfo::WallLeft(false) => sprite!("factory/right_wall", x = x, y = y - 27),
+            ObjectInfo::WallLeft(false) => sprite!("factory/right_wall", x = x - 4, y = y - 27),
             ObjectInfo::WallRight(true) => {
                 sprite!("factory/right_wall_short", x = x + 37, y = y - 34)
             }
