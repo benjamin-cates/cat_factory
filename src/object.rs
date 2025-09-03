@@ -116,9 +116,9 @@ impl Object {
             ),
             ObjectInfo::Death => {
                 if tick() % 30 < 15 {
-                    sprite!("factory/acid", x = x, y = y)
+                    sprite!("factory/acid", x = x, y = y, frame = 0)
                 } else {
-                    sprite!("factory/acid_1", x = x, y = y)
+                    sprite!("factory/acid", x = x, y = y, frame = 1)
                 }
             }
             ObjectInfo::Fire => {
