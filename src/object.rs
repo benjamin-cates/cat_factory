@@ -231,6 +231,28 @@ impl Object {
             }
         }
     }
+    pub fn draw_wires(&self, world: &World) {
+        let half_point = (
+            World::to_screen_space((1, 1).into()).0 / 2,
+            World::to_screen_space((1, 1).into()).1 / 2,
+        );
+        match self.obj_type {
+            ObjectInfo::PushButton(point, idx) | ObjectInfo::ToggleButton(point, idx) => {
+                let active = world.get_wiring(point, idx);
+                let color = if active { 0xcfb538FF } else { 0xCCCCCCFF };
+                let start = World::to_screen_space(point);
+                let end = World::to_screen_space(self.position);
+                path!(
+                    start = (start.0 + half_point.0, start.1 + half_point.1),
+                    end = (end.0 + half_point.0, end.1 + half_point.1),
+                    rounded = true,
+                    width = 2,
+                    color = color,
+                );
+            }
+            _ => {}
+        }
+    }
     pub fn test_push_by(&self, pusher: &ObjectInfo) -> MoveType {
         match self.obj_type {
             ObjectInfo::RotateableConveyor(..) => MoveType::MoveOver,

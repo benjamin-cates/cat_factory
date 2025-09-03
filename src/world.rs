@@ -161,55 +161,6 @@ impl World {
     /// Draw the whole world
     pub fn draw(&mut self) {
         // Draw floors
-        for y in -1i32..=self.height as i32 {
-            for x in -1i32..=self.width as i32 {
-                let has_floor_in_dir = |dir: Direction| {
-                    let pos: Point = (x, y).into();
-                    if !self.point_inside(pos) && self.point_inside(pos - dir) {
-                        return true;
-                    }
-                    if !self.point_inside(pos + dir) {
-                        return false;
-                    }
-                    return !self[pos + dir]
-                        .iter()
-                        .any(|v| v.obj_type == ObjectInfo::Barrier);
-                };
-                let pos = World::to_screen_space((x, y).into());
-                //sprite!(
-                //    "factory/pipes_1",
-                //    x = pos.0,
-                //    y = pos.1,
-                //    frame = (x + y + 2) as usize % 2
-                //);
-                //for (dir, idx) in [
-                //    (Direction::North, 3),
-                //    (Direction::South, 2),
-                //    (Direction::East, 1),
-                //    (Direction::West, 0),
-                //] {
-                //    if has_floor_in_dir(dir) {
-                //        sprite!("factory/shadow", x = pos.0, y = pos.1, frame = idx);
-                //    }
-                //}
-            }
-        }
-        // SHADOW 3
-        //for y in -2..(self.height as i32 + 2) {
-        //    for x in -2..(self.width as i32 + 2) {
-        //        let pos: Point = (x, y).into();
-        //        if (self.point_inside(pos)
-        //            && !self[pos].iter().any(|v| v.obj_type == ObjectInfo::Barrier))
-        //            || (x == -2
-        //                || y == -2
-        //                || x == self.width as i32 + 1
-        //                || y == self.height as i32 + 1)
-        //        {
-        //            let pos = World::to_screen_space((x, y).into());
-        //            sprite!("factory/shadow_3", x = pos.0 - 10, y = pos.1 - 10);
-        //        }
-        //    }
-        //}
         for y in 0..self.height {
             for x in (0..self.width).rev() {
                 if !self[(x, y).into()]
@@ -265,6 +216,21 @@ impl World {
                 align = "right",
                 fixed = true,
             );
+        }
+        // Wires button
+        let wires_bounds = Bounds::with_size(50, 20)
+            .anchor_right(&turbo::screen())
+            .anchor_bottom(&turbo::screen())
+            .translate_y(-5)
+            .translate_x(-5);
+        if self.win_state != WinState::ConstructingLevel
+            && button_held("See wires", wires_bounds, 0x888888FF, 0x777777FF)
+        {
+            for cell in self.cells_iterator() {
+                for obj in self[cell].iter() {
+                    obj.draw_wires(&self);
+                }
+            }
         }
         // Draw caption
         text_box!(
@@ -703,6 +669,10 @@ impl World {
             }
         }
         return true;
+    }
+    /// Returns the wire activity at a certain point and index
+    pub fn get_wiring(&self, point: Point, idx: usize) -> bool {
+        return self.wiring[(point.x() + point.y() * self.width as i32) as usize][idx];
     }
     /// Set the animation to the given value with given duration and log animation in history
     pub fn set_animation(&mut self, point: Point, idx: usize, anim: i32, duration: usize) {
