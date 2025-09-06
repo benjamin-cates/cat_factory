@@ -69,8 +69,11 @@ impl World {
         while let Some((_, edit)) = self.edit_history.pop_if(|v| v.0 == self.move_id) {
             match edit {
                 Edit::ChangeObjInfo(point, idx, info) => {
-                    if matches!(info, ObjectInfo::Door(..)) {
-                        audio::play("door");
+                    match info {
+                        ObjectInfo::Door(_, open) => {
+                            audio::play(if open { "door_open" } else { "door_close" });
+                        }
+                        _ => {}
                     }
                     self[point][idx].obj_type = info;
                 }
@@ -612,7 +615,7 @@ impl World {
                             Edit::ChangeObjInfo(point, i, ObjectInfo::Door(dir, old_open)),
                         ));
                         if self.win_state != WinState::ConstructingLevel {
-                            audio::play("door");
+                            audio::play(if old_open { "door_close" } else { "door_open" });
                         }
                         self.set_animation(point, i, if old_open { 0 } else { 2 }, 5);
                     }

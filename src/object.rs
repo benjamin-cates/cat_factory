@@ -175,22 +175,20 @@ impl Object {
 
             // DOORS
             ObjectInfo::Door(Direction::South | Direction::North, _) => {
-                if anim == 0 {
-                    sprite!("factory/door_vertical_closed", x = x + 19, y = y - 17)
-                } else if anim == 1 {
-                    sprite!("factory/door_vertical_middle", x = x + 19, y = y - 17)
-                } else if anim == 2 {
-                    sprite!("factory/door_vertical_open", x = x + 19, y = y - 17)
-                }
+                sprite!(
+                    "factory/door_vertical",
+                    x = x + 18,
+                    y = y - 19,
+                    frame = anim as usize,
+                );
             }
             ObjectInfo::Door(Direction::East | Direction::West, _) => {
-                if anim == 0 {
-                    sprite!("factory/door_horizontal_closed", x = x + 6, y = y - 7)
-                } else if anim == 1 {
-                    sprite!("factory/door_horizontal_middle", x = x + 6, y = y - 7)
-                } else if anim == 2 {
-                    sprite!("factory/door_horizontal_open", x = x + 6, y = y - 7)
-                }
+                sprite!(
+                    "factory/door_horizontal",
+                    x = x + 5,
+                    y = y - 6,
+                    frame = anim as usize,
+                );
             }
             // CONVEYOR BELTS
             ObjectInfo::RotateableConveyor(dir, phant, false)
