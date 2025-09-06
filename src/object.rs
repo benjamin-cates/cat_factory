@@ -248,6 +248,18 @@ impl Object {
                     color = color,
                 );
             }
+            ObjectInfo::Portal(ref dests, _active, color) => {
+                for dest in dests.iter() {
+                    let start = World::to_screen_space(self.position);
+                    let end = World::to_screen_space(dest.clone() + self.position);
+                    path!(
+                        start = (start.0 + half_point.0, start.1 + half_point.1),
+                        end = (end.0 / 2 + half_point.0, end.1 / 2 + half_point.1),
+                        width = 2,
+                        color = color,
+                    );
+                }
+            }
             _ => {}
         }
     }

@@ -221,13 +221,13 @@ impl World {
             );
         }
         // Wires button
-        let wires_bounds = Bounds::with_size(50, 20)
+        let wires_bounds = Bounds::with_size(100, 20)
             .anchor_right(&turbo::screen())
             .anchor_bottom(&turbo::screen())
             .translate_y(-5)
             .translate_x(-5);
         if self.win_state != WinState::ConstructingLevel
-            && button_held("See wires", wires_bounds, 0x888888FF, 0x777777FF)
+            && button_held("Show connections", wires_bounds, 0x888888FF, 0x777777FF)
         {
             for cell in self.cells_iterator() {
                 for obj in self[cell].iter() {
