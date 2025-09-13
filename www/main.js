@@ -14,6 +14,25 @@ const ERROR_IMAGE_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAFCAYAAAC0CJe+AAAAAXNSR0IArs4c6QAAAGxJREFUKJGNjkEKgDAMBKfgzRZ8gA/o/1/Wg/f1EjW2Gg0UlumQbBIImwQJ4IlF3P9F/mS5ME4BZkFLsETclpYjd0VOH4EETdB8o4PJHYr4W775BqqgdtIq2AT5J8/2+mOXb0BRu6/sFg/M5x2RCGV7WoVq5QAAAABJRU5ErkJggg==";
 const PLEASE_TRY_AGAIN_IMAGE_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFUAAAAFCAYAAAA0e6CtAAAAAXNSR0IArs4c6QAAANxJREFUOI2lkl0OwyAMg0Ha21qpB+AAvf+ZdoBK6/u3hwYpi2LYDxJqMI5toBWg2Ki11l4D+HXHFDdiiq80fu2LObPcmfY/Z/Memf/N6rWUcgeOWuumAjluDLMmZkfkKg2x/0x4Wc61ryeeo6xkfYqf8N7vjWscNjePZyadK/px+Ba5SmNwAdOco7yj/CEr9v30bAROf9Brz8AGtFlI4+7AHrBm05stDn+MNNQFJN4NOIFlxleaIutpeXfg/ICfPUj/iZBhcGOGqTpyR3jmr9bqwUd6Mw2V9cu6AbwAVsYUIXubCLIAAAAASUVORK5CYII=";
+  
+let resizeCanvas = function() {
+  let canvas_width = document.querySelector("canvas").width;
+  let canvas_height = document.querySelector("canvas").height;
+  let pixelRatio = devicePixelRatio;
+  let screen_width_pixels = window.innerWidth * pixelRatio;
+  let screen_height_pixels = window.innerHeight * pixelRatio;
+  let max_scale = Math.min(Math.floor(screen_width_pixels / canvas_width), Math.floor(screen_height_pixels / canvas_height));
+  if(max_scale == 0) {
+    document.querySelector("canvas").style.width = "100%";
+    document.querySelector("canvas").style.height = "100%";
+  }
+  else {
+    document.querySelector("canvas").style.width = (canvas_width * max_scale).toString() + "px";
+    document.querySelector("canvas").style.height = (canvas_height * max_scale).toString() + "px";
+  }
+}
+window.onresize = resizeCanvas;
+window.onload = resizeCanvas;
 
 /**************************************************/
 /* GAMEPAD SUPPORT                                */
@@ -823,6 +842,8 @@ async function run() {
   // Append game canvas.
   player?.removeChild(loadingCanvas);
   player?.appendChild(canvas);
+  
+  resizeCanvas();
 
   // Set up turboGameEvent listener.
   window.addEventListener("turboGameEvent", (e) => {
