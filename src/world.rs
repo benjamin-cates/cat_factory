@@ -9,7 +9,7 @@ use crate::{
     object::{MoveType, Object, ObjectInfo},
     util::{Direction, Point},
 };
-use turbo::*;
+use turbo::{gamepad::Gamepad, keyboard::Keyboard, *};
 
 #[turbo::serialize]
 #[derive(PartialEq)]
@@ -161,45 +161,8 @@ impl World {
             animation: Tween::new(0),
         });
     }
-    /// Draw the whole world
-    pub fn draw(&mut self) {
-        // Draw floors
-        for y in 0..self.height {
-            for x in (0..self.width).rev() {
-                if !self[(x, y).into()]
-                    .iter()
-                    .any(|v| v.obj_type == ObjectInfo::Barrier)
-                {
-                    let pos = World::to_screen_space((x, y).into());
-                    sprite!(
-                        "factory/floor",
-                        frame = (x + y) as usize % 2,
-                        x = pos.0,
-                        y = pos.1
-                    );
-                }
-            }
-        }
-        // Tuples of (location, index, z-index)
-        let mut draw_array: Vec<(Point, usize, i32)> = vec![];
-        // Iterate over all grid cells and add to sprite list
-        for y in 0..self.height {
-            for x in (0..self.width).rev() {
-                let pos = (x, y).into();
-                for i in 0..self[pos].len() {
-                    let mut world_pos = self[pos][i].draw_pos;
-                    let z_index = self[pos][i].draw_height() + world_pos.1.get() * 50
-                        - world_pos.0.get() * 25;
-                    draw_array.push((pos, i, z_index));
-                }
-            }
-        }
-        // Sort sprite list by z-index
-        draw_array.sort_by_key(|v| v.2);
-        // Draw items in sprite array
-        for (position, index, _) in draw_array {
-            self[position][index].draw();
-        }
+    /// Draw buttons and text for world
+    pub fn draw_hud(&mut self) {
         // Draw move count text
         let move_count = format!("Moves: {}", self.move_id);
         text!(move_count.as_str(), x = 35, y = 6, fixed = true);
@@ -253,6 +216,74 @@ impl World {
                 x = 5,
                 fixed = true
             );
+        }
+    }
+    /// Draw the whole world
+    pub fn draw(&mut self) {
+        // Draw floors
+        for y in 0..self.height {
+            for x in (0..self.width).rev() {
+                if !self[(x, y).into()]
+                    .iter()
+                    .any(|v| v.obj_type == ObjectInfo::Barrier)
+                {
+                    let pos = World::to_screen_space((x, y).into());
+                    sprite!(
+                        "factory/floor",
+                        frame = (x + y) as usize % 2,
+                        x = pos.0,
+                        y = pos.1
+                    );
+                }
+            }
+        }
+        // Tuples of (location, index, z-index)
+        let mut draw_array: Vec<(Point, usize, i32)> = vec![];
+        // Iterate over all grid cells and add to sprite list
+        for y in 0..self.height {
+            for x in (0..self.width).rev() {
+                let pos = (x, y).into();
+                for i in 0..self[pos].len() {
+                    let mut world_pos = self[pos][i].draw_pos;
+                    let z_index = self[pos][i].draw_height() + world_pos.1.get() * 50
+                        - world_pos.0.get() * 25;
+                    draw_array.push((pos, i, z_index));
+                }
+            }
+        }
+        // Sort sprite list by z-index
+        draw_array.sort_by_key(|v| v.2);
+        // Draw items in sprite array
+        for (position, index, _) in draw_array {
+            self[position][index].draw();
+        }
+        // Draw text and buttons
+        if self.win_state != WinState::ConstructingLevel {
+            self.draw_hud();
+            // Set camera position if not a menu world
+            let center =
+                World::to_screen_space((self.width as i32 - 1, self.height as i32 - 1).into());
+            camera::set_xy(center.0 / 2 + 20, center.1 / 2 + 10);
+        }
+    }
+    pub fn process_input(&mut self, keyboard: &Keyboard, gamepad: &Gamepad) {
+        if keyboard.key_e().just_pressed() || gamepad.x.just_pressed() {
+            self.undo();
+        }
+        self.convey();
+        if self.conveyance == 0 {
+            if gamepad.left.just_pressed() {
+                self.movement(Direction::West)
+            } else if gamepad.right.just_pressed() {
+                self.movement(Direction::East)
+            } else if gamepad.up.just_pressed() {
+                self.movement(Direction::North)
+            } else if gamepad.down.just_pressed() {
+                self.movement(Direction::South)
+            }
+        }
+        if self.conveyance == 1 {
+            self.convey();
         }
     }
     pub fn cells_iterator<'a>(&'a self) -> impl Iterator<Item = Point> + use<> {

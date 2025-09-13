@@ -51,14 +51,8 @@ impl GameState {
         }
         if let Menu::World(page_id, puzzle_id) = self.menu {
             self.world.draw();
-            let center = World::to_screen_space(
-                (self.world.width as i32 - 1, self.world.height as i32 - 1).into(),
-            );
-            camera::set_xy(center.0 / 2 + 20, center.1 / 2 + 10);
             self.world.check_win();
-            if keyboard.key_e().just_pressed() || gamepad.x.just_pressed() {
-                self.world.undo();
-            }
+            self.world.process_input(&keyboard, &gamepad);
             if keyboard.key_r().just_pressed() || gamepad.y.just_pressed() {
                 self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id].1);
             }
@@ -108,22 +102,6 @@ impl GameState {
                     self.world = LevelBuilder::get_template(PUZZLE_PAGES[page_id][puzzle_id].1);
                 }
                 return;
-            } else {
-                self.world.convey();
-                if self.world.conveyance == 0 {
-                    if gamepad.left.just_pressed() {
-                        self.world.movement(Direction::West)
-                    } else if gamepad.right.just_pressed() {
-                        self.world.movement(Direction::East)
-                    } else if gamepad.up.just_pressed() {
-                        self.world.movement(Direction::North)
-                    } else if gamepad.down.just_pressed() {
-                        self.world.movement(Direction::South)
-                    }
-                }
-                if self.world.conveyance == 1 {
-                    self.world.convey();
-                }
             }
         } else if let Menu::PuzzlePage(_page, _selection) = self.menu {
             let center = World::to_screen_space(
