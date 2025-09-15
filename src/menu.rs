@@ -191,7 +191,7 @@ impl Menu {
                 text_box!(
                     "Credits\n\nBenjamin Cates --> Lead programmer, level designer, artist\
                     \n\n\nSound effects via FreeSound.org\n\
-                    Thanks to SecureSubset, SilentStrikeZ, Aiyumi, MLaudio, \
+                    Thanks to maxlacaria, SilentStrikeZ, Yoyodaman234, MLaudio, \
                     SilverIllusionist, jbdelgado, and ThomasMillar, Ragnar59\n\n\
                     Built with Rust and Turbo",
                     align = "center",
