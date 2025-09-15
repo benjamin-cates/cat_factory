@@ -145,6 +145,7 @@ impl LevelBuilder {
                 caption: "".to_string(),
                 hint: "".to_string(),
                 conveyance: 0,
+                has_connections: true,
             },
         };
         for y in 0..height {
@@ -237,6 +238,11 @@ impl LevelBuilder {
         self.world.requirements.push(win_requirement);
         self
     }
+    /// Removes the "show connections" button
+    pub fn without_connections(mut self) -> Self {
+        self.world.has_connections = false;
+        self
+    }
     /// Returns a template world based on the given name
     pub fn get_template(name: &'static str) -> World {
         const T: bool = true;
@@ -261,6 +267,7 @@ impl LevelBuilder {
                 "It looks like this cat has escaped his box at the Cat Factory! \
                 Can you help guide him back? Press the WASD or arrow keys to move.",
             )
+            .without_connections()
             .finish(),
             "Traps" => Self::make_level(
                 5,
@@ -278,6 +285,7 @@ impl LevelBuilder {
                 "ACID kills cats immediately and the MOUSE distract cats (so don't get too close!)\
                 . Press E to undo or press R to reset the level.",
             )
+            .without_connections()
             .finish(),
             "Buttons" => Self::make_level(
                 7,
@@ -733,6 +741,8 @@ impl LevelBuilder {
             .with_obj((0, 5), ObjectInfo::Goal)
             .with_obj((2, 3), ObjectInfo::Goal)
             .with_hint("Get the goal to the bottom left corner of the right half")
+            .with_caption("Goal boxes can be pushed with other boxes")
+            .without_connections()
             .finish(),
             "Playing with Fire" => Self::make_level(7,5,&[
                 &[F,T,T,T,T,T,T],
@@ -858,6 +868,7 @@ impl LevelBuilder {
             .with_obj((1,1), ObjectInfo::Box)
             .with_obj((5,5), ObjectInfo::Water)
             .with_obj((2,2), ObjectInfo::Goal)
+            .without_connections()
             .finish(),
             "one" => Self::make_level(5, 1, &[&[true, true, true, true, true]], WinRequirement::Never)
                 .with_obj((4, 0), ObjectInfo::Cat)

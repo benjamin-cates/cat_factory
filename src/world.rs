@@ -52,6 +52,8 @@ pub struct World {
     pub hint: String,
     /// Conveyor belt timer
     pub conveyance: u32,
+    /// Whether there are wires or portals
+    pub has_connections: bool,
 }
 
 impl World {
@@ -190,6 +192,7 @@ impl World {
             .translate_y(-5)
             .translate_x(-5);
         if self.win_state != WinState::ConstructingLevel
+            && self.has_connections
             && button_held("Show connections", wires_bounds, 0x888888FF, 0x777777FF)
         {
             for cell in self.cells_iterator() {
