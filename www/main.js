@@ -15,20 +15,20 @@ const ERROR_IMAGE_URL =
 const PLEASE_TRY_AGAIN_IMAGE_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFUAAAAFCAYAAAA0e6CtAAAAAXNSR0IArs4c6QAAANxJREFUOI2lkl0OwyAMg0Ha21qpB+AAvf+ZdoBK6/u3hwYpi2LYDxJqMI5toBWg2Ki11l4D+HXHFDdiiq80fu2LObPcmfY/Z/Memf/N6rWUcgeOWuumAjluDLMmZkfkKg2x/0x4Wc61ryeeo6xkfYqf8N7vjWscNjePZyadK/px+Ba5SmNwAdOco7yj/CEr9v30bAROf9Brz8AGtFlI4+7AHrBm05stDn+MNNQFJN4NOIFlxleaIutpeXfg/ICfPUj/iZBhcGOGqTpyR3jmr9bqwUd6Mw2V9cu6AbwAVsYUIXubCLIAAAAASUVORK5CYII=";
   
-let resizeCanvas = function() {
-  let canvas_width = document.querySelector("canvas").width;
-  let canvas_height = document.querySelector("canvas").height;
-  let pixelRatio = devicePixelRatio;
-  let screen_width_pixels = window.innerWidth * pixelRatio;
-  let screen_height_pixels = window.innerHeight * pixelRatio;
-  let max_scale = Math.min(Math.floor(screen_width_pixels / canvas_width), Math.floor(screen_height_pixels / canvas_height));
+function resizeCanvas() {
+  let canvas = document.querySelector("canvas");
+  // Computes the maximum integer scale you could have before hitting the edge
+  let max_scale = Math.min(
+    Math.floor(window.innerWidth * devicePixelRatio / canvas.width), 
+    Math.floor(window.innerHeight * devicePixelRatio / canvas.height)
+  );
   if(max_scale == 0) {
-    document.querySelector("canvas").style.width = "100%";
-    document.querySelector("canvas").style.height = "100%";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
   }
   else {
-    document.querySelector("canvas").style.width = (canvas_width * max_scale).toString() + "px";
-    document.querySelector("canvas").style.height = (canvas_height * max_scale).toString() + "px";
+    canvas.style.width = (canvas.width * max_scale / devicePixelRatio).toString() + "px";
+    canvas.style.height = (canvas.height * max_scale / devicePixelRatio).toString() + "px";
   }
 }
 window.onresize = resizeCanvas;
