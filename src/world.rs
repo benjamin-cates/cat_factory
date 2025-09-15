@@ -351,7 +351,12 @@ impl World {
                 }
             }
             if movements.len() != 0 && self.win_state != WinState::ConstructingLevel {
-                audio::play("conveyor")
+                // Don't play the same copy while it's running
+                if audio::is_playing("conveyor2") {
+                    audio::play("conveyor2_copy");
+                } else {
+                    audio::play("conveyor2");
+                }
             }
             for (dir, position, push_proposal) in movements {
                 self.try_movement(dir, position, push_proposal);
