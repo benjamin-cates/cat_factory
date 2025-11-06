@@ -123,11 +123,11 @@ impl Object {
             }
             ObjectInfo::Fire => {
                 sprite!(
-                    "factory/fire",
+                    "factory/better_fire",
                     frame = ((tick() as f32 + y as f32 * 10.0 + x as f32 * 5.0 + x as f32 % 51.0)
                         / 10.0) as usize,
                     x = x + 5,
-                    y = y - 25
+                    y = y - 36
                 )
             }
             ObjectInfo::BurntBox => {
