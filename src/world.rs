@@ -490,7 +490,7 @@ impl World {
             match self[point][i].obj_type.clone() {
                 ObjectInfo::PushButton(wire_dst, wiring_idx) => {
                     if self.set_wiring(wire_dst, wiring_idx, covered) {
-                        self.set_animation(point, i, if covered { 1 } else { 0 }, 1);
+                        self.set_animation(point, i, if covered { 2 } else { 0 }, 3);
                     }
                 }
                 ObjectInfo::ToggleButton(wire_dst, wiring_idx) => {
@@ -499,7 +499,7 @@ impl World {
                             [(wire_dst.x() + wire_dst.y() * self.width as i32) as usize]
                             [wiring_idx];
                         if self.set_wiring(wire_dst, wiring_idx, !current) {
-                            self.set_animation(point, i, if !current { 1 } else { 0 }, 1);
+                            self.set_animation(point, i, if !current { 2 } else { 0 }, 3);
                         }
                     }
                 }

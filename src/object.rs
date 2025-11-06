@@ -125,7 +125,7 @@ impl Object {
                 sprite!(
                     "factory/better_fire",
                     frame = ((tick() as f32 + y as f32 * 10.0 + x as f32 * 5.0 + x as f32 % 51.0)
-                        / 10.0) as usize,
+                        / 8.0) as usize,
                     x = x + 5,
                     y = y - 36
                 )
@@ -160,16 +160,20 @@ impl Object {
             // BUTTONS
             ObjectInfo::PushButton(..) => {
                 if anim == 0 {
-                    sprite!("house/push_button_open", x = x, y = y)
+                    sprite!("house/push2_up", x = x, y = y - 1)
+                } else if anim == 1 {
+                    sprite!("house/push2_middle", x = x, y = y - 1)
                 } else {
-                    sprite!("house/push_button", x = x, y = y)
+                    sprite!("house/push2_down", x = x, y = y - 1)
                 }
             }
             ObjectInfo::ToggleButton(..) => {
                 if anim == 0 {
-                    sprite!("house/toggle_button_open", x = x, y = y)
+                    sprite!("house/toggle2_up", x = x, y = y)
+                } else if anim == 1 {
+                    sprite!("house/toggle2_middle", x = x, y = y)
                 } else {
-                    sprite!("house/toggle_button", x = x, y = y)
+                    sprite!("house/toggle2_down", x = x, y = y)
                 }
             }
 
